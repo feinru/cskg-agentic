@@ -94,31 +94,31 @@ The pipeline is modular and can also be run sequentially on your host machine.
 ### 1. Fetcher Agent
 Fetches raw datasets:
 ```bash
-python fetcher_agent/main.py
+python agents/fetcher/main.py
 ```
 
 ### 2. Parser Agent
 Parses raw files and maps to SEPSES classes:
 ```bash
-python parser_agent/main.py
+python agents/parser/main.py
 ```
 
 ### 3. Linking Agent
 Identifies and maps relationships:
 ```bash
-python linking_agent/main.py
+python agents/linking/main.py
 ```
 
 ### 4. Validation Agent
 Validates semantic compliance and structure:
 ```bash
-python validation_agent/main.py
+python agents/validation/main.py
 ```
 
 ### 5. SPARQL Endpoint
 Start Virtuoso Database:
 ```bash
-cd sparql_endpoint
+cd sparql
 docker compose up -d
 ```
 Load the validated TTL files:
@@ -134,16 +134,16 @@ python verify.py
 
 ## Expected Outputs
 
-- **Fetcher Agent:** Raw cybersecurity data files stored in `fetcher_agent/cache/`.
+- **Fetcher Agent:** Raw cybersecurity data files stored in `agents/fetcher/cache/`.
 - **Parser Agent:** Parsed Turtle (`.ttl`) files mapped to SEPSES ontology.
-- **Linking Agent:** Linked Turtle files containing relationship triples, saved in `linking_agent/output/`.
+- **Linking Agent:** Linked Turtle files containing relationship triples, saved in `agents/linking/output/`.
 - **Validation Agent:** Validation reports summarizing triple counts, subjects, errors, and warnings.
 - **SPARQL Endpoint:** A fully queryable Knowledge Graph at `http://localhost:8890/sparql` with named graphs such as `http://w3id.org/sepses/graph/cve`.
 
 ---
 
 ## Security Use Cases
-We have documented 3 primary security query use cases in the [USE_CASES.md](file:///mnt/shared/Kuliah/S1/UGM/4/MRPL/tugas_3/cskg/sparql_endpoint/use_cases/USE_CASES.md) file, showing exact query inputs and outputs:
+We have documented 3 primary security query use cases in the [USE_CASES.md](file:///mnt/shared/Kuliah/S1/UGM/4/MRPL/tugas_3/cskg/sparql/use_cases/USE_CASES.md) file, showing exact query inputs and outputs:
 1. **Vulnerability Attack Chain Analysis** (`CVE` -> `CWE` -> `CAPEC` -> `ATT&CK`)
 2. **Exploited Vulnerability Prioritization** (`CISA KEV` -> `ICSA` -> `CVE`)
 3. **ATT&CK Technique Coverage Mapping** (`CAPEC` -> `ATT&CK`)
@@ -155,7 +155,7 @@ We have documented 3 primary security query use cases in the [USE_CASES.md](file
 - **Sequential Dependency:** The pipeline currently requires manual sequential execution. If `fetcher_agent` fails or updates partial data, downstream agents must be re-run manually.
 - **Stale Data:** Fetched data is cached; you must clear the cache or adjust fetch instructions to pull the latest upstream vulnerability advisories.
 - **Limited CVE & CPE Data (Demo Mode):** The CVE and CPE fetchers are currently capped at 100 records for development purposes. This causes a high error rate in `icsa_to_cve.ttl` and `cve_to_cpe.ttl` because most CVEs referenced by the ICSA are missing from the base dataset. 
-  * **Fix:** Remove `MAX_DEMO = 100` in `fetcher_agent/fetchers/nvd.py` and use an NVD API key to perform a full fetch (~350K CVEs, estimated to take 2–4 hours).
+  * **Fix:** Remove `MAX_DEMO = 100` in `agents/fetcher/fetchers/nvd.py` and use an NVD API key to perform a full fetch (~350K CVEs, estimated to take 2–4 hours).
 
 ## 10. Contributor
 

@@ -8,11 +8,11 @@ All notable changes to the Cybersecurity Knowledge Graph (CSKG) pipeline project
 - **Quick Start Documentation**: Included 'Quick Start with Docker' guides in `README.md`.
 - **System Architecture Visualizations**: Created Mermaid diagram illustrating the flow between parser, linking, validation agents, and endpoints.
 - **Environment Template**: Created `.env.example` containing references to all environment configurations (`GOOGLE_API_KEY`, `NVD_API_KEY`, `VIRTUOSO_HOST`, `VIRTUOSO_CONTAINER`).
-- **Use Cases**: Documented three query use-cases in `sparql_endpoint/use_cases/USE_CASES.md`.
+- **Use Cases**: Documented three query use-cases in `sparql/use_cases/USE_CASES.md`.
 
 ### Changed
 - **Dependency Management**: Renamed root dependencies file to `requirements.txt` (from `requirement.txt`) and updated references.
 - **Container Naming**: Renamed Virtuoso container to `cskg-sparql` to clearly match the service name.
 
 ### Fixed
-- Fixed hardcoded fallback container name in loader script (`sparql_endpoint/load.py`).
+- Fixed hardcoded fallback container name in loader script (`sparql/load.py`).

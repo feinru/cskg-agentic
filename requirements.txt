@@ -3,3 +3,5 @@ langchain
 langchain-google-genai
 python-dotenv
 rdflib
+matplotlib
+pandas

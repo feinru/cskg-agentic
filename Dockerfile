@@ -13,8 +13,8 @@ RUN apt-get update && \
 
 # Copy requirement files first for better caching
 COPY requirements.txt ./
-COPY fetcher_agent/requirements.txt ./fetcher_reqs.txt
-COPY validation_agent/requirements.txt ./validation_reqs.txt
+COPY agents/fetcher/requirements.txt ./fetcher_reqs.txt
+COPY agents/validation/requirements.txt ./validation_reqs.txt
 
 # Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt -r fetcher_reqs.txt -r validation_reqs.txt
@@ -23,6 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt -r fetcher_reqs.txt -r valida
 COPY . .
 
 # Make the pipeline script executable
-RUN chmod +x run_pipeline.sh
+RUN chmod +x run.sh
 
-CMD ["./run_pipeline.sh"]
+CMD ["./run.sh"]

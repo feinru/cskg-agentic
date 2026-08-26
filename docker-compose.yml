@@ -9,8 +9,8 @@ services:
       - '8890:8890' # SPARQL Endpoint HTTP / Conductor Web UI
       - '1111:1111' # ISQL connection port
     volumes:
-      - ./sparql_endpoint/data:/database/data
-      - ./sparql_endpoint/toload:/opt/virtuoso-opensource/vsp/toload
+      - ./sparql/db:/database
+      - ./sparql/data:/opt/virtuoso-opensource/vsp/toload
     restart: unless-stopped
 
   pipeline:
