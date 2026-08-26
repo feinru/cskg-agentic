@@ -20,35 +20,10 @@ This project implements a multi-agent pipeline to fetch, parse, link, validate, 
    ```
 
 2. **Install dependencies:**
-   Each agent has its own virtual environment setup. You can either install dependencies globally or per agent.
    A root `requirements.txt` exists. You can install via:
    ```bash
    pip install -r requirements.txt
    ```
-
-## System Architecture
-
-Below is the conceptual overview of the CSKG agentic pipeline architecture:
-
-```mermaid
-graph TD
-    A[Fetcher Agent] -->|Raw Data cache/| B[Parser Agent]
-    B -->|Base Triples .ttl| C[Linking Agent]
-    C -->|Linked Triples .ttl| D[Validation Agent]
-    D -->|Quality Check & Report| E[SPARQL Endpoint - Virtuoso]
-    E -->|Knowledge Graph| F[NL2SPARQL SOC Analyst Agent]
-
-    subgraph Data Sources
-        DS1[CVE - NVD]
-        DS2[CPE - NVD]
-        DS3[CWE - MITRE]
-        DS4[CAPEC - MITRE]
-        DS5[ATT&CK - MITRE]
-        DS6[ICSA KEV - CISA]
-    end
-
-    Data Sources --> A
-```
 
 ## Configuration
 
@@ -94,25 +69,25 @@ The pipeline is modular and can also be run sequentially on your host machine.
 ### 1. Fetcher Agent
 Fetches raw datasets:
 ```bash
-python agents/fetcher/main.py
+python modules/fetcher/main.py
 ```
 
 ### 2. Parser Agent
 Parses raw files and maps to SEPSES classes:
 ```bash
-python agents/parser/main.py
+python modules/parser/main.py
 ```
 
 ### 3. Linking Agent
 Identifies and maps relationships:
 ```bash
-python agents/linking/main.py
+python modules/linking/main.py
 ```
 
 ### 4. Validation Agent
 Validates semantic compliance and structure:
 ```bash
-python agents/validation/main.py
+python modules/validation/main.py
 ```
 
 ### 5. SPARQL Endpoint
@@ -134,9 +109,9 @@ python verify.py
 
 ## Expected Outputs
 
-- **Fetcher Agent:** Raw cybersecurity data files stored in `agents/fetcher/cache/`.
+- **Fetcher Agent:** Raw cybersecurity data files stored in `modules/fetcher/cache/`.
 - **Parser Agent:** Parsed Turtle (`.ttl`) files mapped to SEPSES ontology.
-- **Linking Agent:** Linked Turtle files containing relationship triples, saved in `agents/linking/output/`.
+- **Linking Agent:** Linked Turtle files containing relationship triples, saved in `modules/linking/output/`.
 - **Validation Agent:** Validation reports summarizing triple counts, subjects, errors, and warnings.
 - **SPARQL Endpoint:** A fully queryable Knowledge Graph at `http://localhost:8890/sparql` with named graphs such as `http://w3id.org/sepses/graph/cve`.
 
@@ -155,15 +130,4 @@ We have documented 3 primary security query use cases in the [USE_CASES.md](file
 - **Sequential Dependency:** The pipeline currently requires manual sequential execution. If `fetcher_agent` fails or updates partial data, downstream agents must be re-run manually.
 - **Stale Data:** Fetched data is cached; you must clear the cache or adjust fetch instructions to pull the latest upstream vulnerability advisories.
 - **Limited CVE & CPE Data (Demo Mode):** The CVE and CPE fetchers are currently capped at 100 records for development purposes. This causes a high error rate in `icsa_to_cve.ttl` and `cve_to_cpe.ttl` because most CVEs referenced by the ICSA are missing from the base dataset. 
-  * **Fix:** Remove `MAX_DEMO = 100` in `agents/fetcher/fetchers/nvd.py` and use an NVD API key to perform a full fetch (~350K CVEs, estimated to take 2–4 hours).
-
-## 10. Contributor
-
-| Name | GitHub | Role |
-|---|---|---|
-| Atha Putra Fausta | [@ahtape](https://github.com/ahtape) | Validation Agent & Evaluation |
-| Fikar Adi Nugraha | [@Gatoetkatja](https://github.com/Gatoetkatja) | Fetcher Agent & SPARQL Endpoint |
-| Abdul Hamid Awaludin Ardiansyah | [@asistink](https://github.com/asistink) | Linking Agent & Evaluation |
-| Khoirul Adib Fairuza | [@feinru](https://github.com/feinru) | Parser Agent & SPARQL Endpoint |
-
----
+  * **Fix:** Remove `MAX_DEMO = 100` in `modules/fetcher/fetchers/nvd.py` and use an NVD API key to perform a full fetch (~350K CVEs, estimated to take 2–4 hours).

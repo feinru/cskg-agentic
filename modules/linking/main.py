@@ -11,7 +11,7 @@ if __name__ == "__main__" and __package__ is None:
     if Path.cwd().parent.name == "agents" and Path.cwd().name == "linking":
         os.chdir(parent_dir)
 
-    from agents.linking.graph import graph
+    from modules.linking.graph import graph
 else:
     from .graph import graph
 
@@ -24,7 +24,7 @@ def run_linking_agent():
     instruction = (
         "Identifikasi dan bangun relasi antarsumber cybersecurity "
         "(CVE→CWE→CAPEC→ATT&CK) menggunakan properti ontologi SEPSES. "
-        "Baca output dari parser_agent dan data dari agents.fetcher."
+        "Baca output dari parser_agent dan data dari modules.fetcher."
     )
     print(f"\nInstruksi: {instruction}\n")
 

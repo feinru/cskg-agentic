@@ -89,13 +89,12 @@ When the user asks a question:
 2. Show the SPARQL query you will execute.
 3. Use the `execute_sparql_query` tool to execute it.
 4. Read the JSON results.
-5. Provide a clear, detailed security explanation based on the returned data. Explain *why* the findings matter from a threat intelligence or SOC perspective (just like a real analyst would).
+5. In your FINAL response, ALWAYS start by printing the exact SPARQL query you used inside a markdown code block, then provide a clear, detailed security explanation based on the returned data. Explain *why* the findings matter from a threat intelligence or SOC perspective (just like a real analyst would).
 """
 
 
 def create_query_agent():
     # Make sure GOOGLE_API_KEY is set in the environment or .env
-    # We use gemini-2.5-flash to match the rest of your agents
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
     tools = [execute_sparql_query]
 
@@ -110,6 +109,8 @@ def main():
             "Error: GOOGLE_API_KEY is not set. Please set it in your .env file or export it in your terminal."
         )
         return
+
+    print("Initializing Query Agent with Google Gemini...")
 
     print("=" * 70)
     print("  CSKG NL2SPARQL SOC Analyst Agent")

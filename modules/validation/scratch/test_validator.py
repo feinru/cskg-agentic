@@ -7,7 +7,7 @@ parent_dir = current_file_path.parent.parent.parent
 if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
-from agents.validation.nodes.executor import executor
+from modules.validation.nodes.executor import executor
 
 # =====================================================================
 # DATA SIMULASI (SYNTHESIZED RDF TURTLE DATA)
@@ -77,7 +77,7 @@ def run_tests():
     print("=" * 60)
 
     # 1. Persiapkan folder scratch dan tulis berkas simulasi
-    scratch_dir = Path("agents/validation/scratch")
+    scratch_dir = Path("modules/validation/scratch")
     scratch_dir.mkdir(parents=True, exist_ok=True)
 
     valid_file = scratch_dir / "valid_simulated.ttl"

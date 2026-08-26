@@ -69,7 +69,7 @@ def executor(state: LinkingState) -> LinkingState:
         else:
             print(f"  [EXECUTOR] WARNING: Tipe linking tidak dikenali: {link_type}")
 
-        out_dir = Path("agents/linking/output")
+        out_dir = Path("modules/linking/output")
         out_dir.mkdir(parents=True, exist_ok=True)
         out_file = out_dir / f"{link_type}.ttl"
 

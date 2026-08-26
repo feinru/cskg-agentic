@@ -2,6 +2,9 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Ensure Python output is immediately flushed to logs
+ENV PYTHONUNBUFFERED=1
+
 # Install curl and ca-certificates to download docker client
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl ca-certificates && \
@@ -13,8 +16,8 @@ RUN apt-get update && \
 
 # Copy requirement files first for better caching
 COPY requirements.txt ./
-COPY agents/fetcher/requirements.txt ./fetcher_reqs.txt
-COPY agents/validation/requirements.txt ./validation_reqs.txt
+COPY modules/fetcher/requirements.txt ./fetcher_reqs.txt
+COPY modules/validation/requirements.txt ./validation_reqs.txt
 
 # Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt -r fetcher_reqs.txt -r validation_reqs.txt

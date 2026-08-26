@@ -140,7 +140,7 @@ Berdasarkan pola temuan dalam penjaminan mutu, berikut adalah tindakan perbaikan
 
 3. **Kasus Anomali Format Regex (ID Malformed):**
    * *Analisis:* Disebabkan oleh karakter penyehat (*sanitization*) yang berlebih saat konversi URI atau ketidakcocokan ekstraksi ID dari data mentah.
-   * *Mitigasi:* Tinjau ulang metode `_sanitize_uri_component` di `agents/linking/nodes/executor.py` untuk memastikan string ID bersih tanpa modifikasi karakter ilegal.
+   * *Mitigasi:* Tinjau ulang metode `_sanitize_uri_component` di `modules/linking/nodes/executor.py` untuk memastikan string ID bersih tanpa modifikasi karakter ilegal.
 
 ---
 *Dokumen ini sah dirilis secara otomatis oleh Validation Agent, Laboratorium Rekayasa Perangkat Lunak.*

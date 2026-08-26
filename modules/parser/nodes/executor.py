@@ -74,7 +74,7 @@ def executor(state: ParserState) -> ParserState:
         # 2. Generate RML rules (tetap dipertahankan sebagai dokumentasi mapping)
         source_key = source.lower()
         # ... (blok RML tidak diubah, langsung lanjut ke simpan)
-        out_dir = Path("agents/parser/output")
+        out_dir = Path("modules/parser/output")
         out_dir.mkdir(parents=True, exist_ok=True)
 
         # [blok rml_content yang lama tetap di sini, tidak perlu dihapus]

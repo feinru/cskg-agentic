@@ -7,7 +7,7 @@ def planner(state: ValidationState) -> ValidationState:
     """
     Node Planner: Menganalisis hasil keluaran linking_agent dan menyusun rencana validasi.
     """
-    print("\n  [PLANNER] Memulai analisis output agents.linking...")
+    print("\n  [PLANNER] Memulai analisis output modules.linking...")
 
     linking_output_dir = Path(__file__).resolve().parent.parent.parent / "linking" / "output"
     validation_plan = []
@@ -23,14 +23,14 @@ def planner(state: ValidationState) -> ValidationState:
 
     found_files = []
 
-    # 1. Pindai direktori agents/linking/output
+    # 1. Pindai direktori modules/linking/output
     if linking_output_dir.exists():
         for file in linking_output_dir.iterdir():
             if file.is_file() and file.suffix.lower() == ".ttl":
                 found_files.append(file)
                 print(f"  [PLANNER] Ditemukan berkas grafik Turtle: {file.name}")
     else:
-        print("  [PLANNER] WARNING: Direktori agents/linking/output belum terbentuk.")
+        print("  [PLANNER] WARNING: Direktori modules/linking/output belum terbentuk.")
 
     # 2. Susun tugas validasi berdasarkan berkas yang ditemukan
     if found_files:
@@ -45,7 +45,7 @@ def planner(state: ValidationState) -> ValidationState:
             validation_plan.append(task)
             print(f"  [PLANNER] ✓ Dijadwalkan: {file_path.name}")
     else:
-        print("  [PLANNER] WARNING: Tidak ada berkas .ttl ditemukan di agents/linking/output.")
+        print("  [PLANNER] WARNING: Tidak ada berkas .ttl ditemukan di modules/linking/output.")
         print("  [PLANNER] Menggunakan berkas simulasi atau menunggu pipeline dijalankan.")
 
     # 3. Ambil tugas pertama jika rencana tidak kosong

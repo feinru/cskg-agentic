@@ -16,7 +16,7 @@ if __name__ == "__main__" and __package__ is None:
     if Path.cwd().parent.name == "agents" and Path.cwd().name == "validation":
         os.chdir(parent_dir)
 
-    from agents.validation.graph import graph
+    from modules.validation.graph import graph
 else:
     from .graph import graph
 

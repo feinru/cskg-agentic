@@ -3,17 +3,17 @@
 
 set -e
 
-echo "1. Running Fetcher Agent..."
-python agents/fetcher/main.py
+echo "1. Running Fetcher Module..."
+python modules/fetcher/main.py
 
-echo "2. Running Parser Agent..."
-python agents/parser/main.py
+echo "2. Running Parser Module..."
+python modules/parser/main.py
 
-echo "3. Running Linking Agent..."
-python agents/linking/main.py
+echo "3. Running Linking Module..."
+python modules/linking/main.py
 
-echo "4. Running Validation Agent..."
-python agents/validation/main.py
+echo "4. Running Validation Module..."
+python modules/validation/main.py
 
 echo "5. Copying TTL files to toload directory..."
 mkdir -p sparql/data
@@ -35,6 +35,3 @@ sleep 10
 python sparql/load.py
 
 echo "CSKG Pipeline completed successfully!"
-
-# Keep container alive so it doesn't immediately exit when using docker compose up
-tail -f /dev/null

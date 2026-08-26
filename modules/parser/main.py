@@ -13,7 +13,7 @@ if __name__ == "__main__" and __package__ is None:
     if Path.cwd().parent.name == "agents" and Path.cwd().name == "parser":
         os.chdir(parent_dir)
         
-    from agents.parser.graph import graph
+    from modules.parser.graph import graph
 else:
     from .graph import graph
 

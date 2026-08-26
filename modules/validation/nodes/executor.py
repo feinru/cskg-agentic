@@ -51,8 +51,8 @@ def executor(state: ValidationState) -> ValidationState:
         for prefix, uri in NAMESPACES.items():
             g.bind(prefix, URIRef(uri))
 
-        # Load base data dari agents/parser/output sebagai konteks tambahan
-        parser_output_dir = Path("agents/parser/output")
+        # Load base data dari modules/parser/output sebagai konteks tambahan
+        parser_output_dir = Path("modules/parser/output")
         BASE_TTL_FILES = [
             "attck_enterprise.ttl",
             "attck_ics.ttl",

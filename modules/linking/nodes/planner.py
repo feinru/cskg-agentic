@@ -19,10 +19,10 @@ def planner(state: LinkingState) -> LinkingState:
                 available_sources.add(source_name)
                 print(f"  [PLANNER] Ditemukan output parser: {source_name} ({rml_file.name})")
     else:
-        print("  [PLANNER] WARNING: Direktori agents/parser/output tidak ditemukan.")
+        print("  [PLANNER] WARNING: Direktori modules/parser/output tidak ditemukan.")
 
     if not available_sources and fetcher_cache_dir.exists():
-        print("  [PLANNER] Mencoba membaca langsung dari agents/fetcher/cache...")
+        print("  [PLANNER] Mencoba membaca langsung dari modules/fetcher/cache...")
         for cache_file in fetcher_cache_dir.iterdir():
             if cache_file.is_file():
                 source_name = cache_file.stem.lower()
