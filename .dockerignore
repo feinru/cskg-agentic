@@ -1,0 +1,7 @@
+sparql/db/
+sparql/data/
+.venv/
+__pycache__/
+web/
+.git/
+*.log

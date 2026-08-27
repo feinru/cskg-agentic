@@ -1,0 +1,123 @@
+.appContainer {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.5rem;
+  position: relative;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.sidebarCollapsed {
+  width: 60px;
+  padding: 2rem 0.5rem;
+  align-items: center;
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 2rem;
+  bottom: 2rem;
+  width: 1px;
+  background-color: var(--border);
+}
+
+.sidebarTitle {
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  font-size: 1.5rem;
+  color: #000000;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navLink {
+  padding: 0.5rem 0;
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebarHistoryList {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebarHistoryItem {
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: block;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.15rem 0;
+  margin-left: 0;
+}
+
+.sidebarHistoryItem:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+  overflow-y: auto;
+  position: relative;
+}
+
+.sidebarLicense {
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 1rem;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.collapseButton:hover {
+  color: var(--text);
+}
+
+.collapseButtonCollapsed {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 1rem;
+  padding: 0;
+  margin-top: 1rem;
+  transition: color 0.2s ease;
+}
+
+.collapseButtonCollapsed:hover {
+  color: var(--text);
+}

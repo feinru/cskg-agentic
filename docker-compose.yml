@@ -26,3 +26,17 @@ services:
       - .:/app
     depends_on:
       - virtuoso
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: cskg-web
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    depends_on:
+      - virtuoso

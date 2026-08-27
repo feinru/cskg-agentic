@@ -1,0 +1,64 @@
+.historyContainer {
+  padding: 3rem 4rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.historyHeader {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-dark);
+  padding-bottom: 0.5rem;
+}
+
+.historyHeader h1 {
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  font-weight: normal;
+  font-size: 2.25rem;
+  color: #000000;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+}
+
+.historyItem {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 0;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.historyItem:hover {
+  background-color: var(--bg-sidebar);
+}
+
+.historyItemDate {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.historyItemPreview {
+  color: var(--accent);
+  font-size: 1.15rem;
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.25rem;
+}
+
+.historyItemPreview:hover {
+  text-decoration: underline;
+}
+
+.emptyState {
+  margin-top: 3rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}

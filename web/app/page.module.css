@@ -1,0 +1,247 @@
+.chatContainer {
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.messageUser {
+  flex-direction: row-reverse;
+  padding-left: 20%;
+}
+.messageUser .messageContent {
+  flex: 0 1 auto;
+  text-align: left;
+}
+
+.messageAgent {
+  flex-direction: row;
+  padding-right: 20%;
+}
+.messageAgent .messageContent {
+  flex: 1;
+}
+
+.markdownOutput {
+  font-family: inherit;
+  line-height: 1.6;
+  white-space: normal;
+}
+
+.markdownOutput > :first-child {
+  margin-top: 0;
+}
+
+.markdownOutput p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.markdownOutput p:last-child {
+  margin-bottom: 0;
+}
+
+.markdownOutput ul, .markdownOutput ol {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdownOutput li {
+  margin-bottom: 0.5rem;
+}
+
+.markdownOutput li > :first-child {
+  margin-top: 0;
+}
+
+.markdownOutput li > p {
+  margin-bottom: 0;
+}
+
+.markdownOutput ul ul, .markdownOutput ol ol, .markdownOutput ul ol, .markdownOutput ol ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.markdownOutput strong {
+  font-weight: 600;
+  color: #000;
+}
+
+.markdownOutput h1, .markdownOutput h2, .markdownOutput h3, .markdownOutput h4 {
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #000;
+}
+
+.markdownOutput a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.markdownOutput a:hover {
+  color: var(--accent-hover);
+}
+
+.markdownOutput pre {
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-dark);
+  padding: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  border-radius: 2px;
+  font-size: 0.9rem;
+}
+
+.markdownOutput code {
+  font-family: Consolas, "Courier New", monospace;
+  background-color: var(--bg-sidebar);
+  padding: 0.15rem 0.3rem;
+  border-radius: 2px;
+  font-size: 0.9em;
+}
+
+.markdownOutput pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 1em;
+}
+
+.messageIndicator {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 1.1rem;
+  font-weight: normal;
+  color: var(--text-secondary);
+  user-select: none;
+  margin-top: -0.05rem;
+}
+
+.messageContent {
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.messageContent pre {
+  background-color: #f8f9fa;
+  padding: 1.25rem;
+  border: 1px solid var(--border-dark);
+  border-radius: 2px;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.messageContent code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background-color: #f8f9fa;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 0.9em;
+}
+
+.messageContent pre code {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+}
+
+.inputContainer {
+  padding: 0 4rem 3rem 4rem;
+  background: var(--bg);
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  margin-top: auto;
+}
+
+.inputForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: 2px;
+  padding: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inputForm:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 1px 4px rgba(51, 102, 204, 0.15);
+}
+
+.chatInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 0.75rem;
+  font-family: inherit;
+  font-size: 15px;
+  resize: vertical;
+  min-height: 50px;
+  max-height: 250px;
+  outline: none;
+}
+
+.sendBtn {
+  background-color: #f8f9fa;
+  color: var(--text-primary);
+  border: 1px solid var(--border-dark);
+  padding: 0.5rem 1.25rem;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.15s ease;
+  height: 40px;
+  margin-bottom: 0.5rem;
+  margin-right: 0.25rem;
+}
+
+.sendBtn::after {
+  content: "Chat";
+}
+
+.sendBtn:hover:not(:disabled) {
+  background-color: #ffffff;
+  border-color: var(--text-secondary);
+}
+
+.sendBtn:disabled {
+  color: var(--border-dark);
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+  border-color: var(--border);
+}
+
+.loadingDots {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  font-size: 1.1rem;
+}
+
+.loadingDots::after {
+  content: "Generating analysis...";
+}
+.loadingDots span {
+  display: none;
+}

@@ -10,22 +10,14 @@ This project implements a multi-agent pipeline to fetch, parse, link, validate, 
 - Docker & Docker Compose (for the SPARQL Endpoint)
 - `pip` or `pipenv`
 
-### Setup
+### 1. Clone the repository
 
-1. **Clone the repository:**
+```bash
+git clone https://github.com/feinru/cskg-agentic   
+cd cskg-agentic
+```
 
-   ```bash
-   git clone https://github.com/Software-Engineering-2026-Class/kelompok4-cyber-kg-agentic
-   cd cskg
-   ```
-
-2. **Install dependencies:**
-   A root `requirements.txt` exists. You can install via:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Configuration
+### 2. Configuration
 
 Configuration is primarily handled through environment variables and agent-specific `.env` files.
 
@@ -43,54 +35,64 @@ Rename `.env.example` to `.env` in the project root:
 cp .env.example .env
 ```
 
----
+> **Do not forget to add your `GOOGLE_API_KEY` inside the new `.env` file!** The pipeline and the Agentic Web UI will fail to run if this key is missing.
 
 ## Quick Start with Docker
 
-The easiest way to build, run, and query the entire CSKG pipeline is using Docker Compose.
+The easiest way to build, run, and query the entire CSKG pipeline and web UI is using Docker Compose.
 
 ### 1. Build and Start Services
-This starts Virtuoso, builds the pipeline container, and automatically runs the sequential fetch-parse-link-validate-load cycle:
+This starts Virtuoso, builds the data pipeline container, builds the Next.js web application, and automatically runs the sequential fetch-parse-link-validate-load cycle:
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-### 2. Verify SPARQL Endpoint & Query
-Once the pipeline container output shows completion (keeps alive with `tail -f`), verify the endpoint:
+### 2. Verify Services
+Once the pipeline container output shows completion, you can access your services:
+- **Agentic Web UI (Chat)**: `http://localhost:3000`
 - **SPARQL Endpoint**: `http://localhost:8890/sparql`
 - **Web Admin UI**: `http://localhost:8890/conductor`
 
----
+### 3. Stop Services
+When you are done, you can safely shut down all the background containers without losing your database data by running:
+```bash
+docker compose down
+```
 
 ## How to Run the Pipeline (Local/Manual)
 
-The pipeline is modular and can also be run sequentially on your host machine.
+The pipeline is modular and can also be run sequentially on your host machine without Docker.
 
-### 1. Fetcher Agent
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Fetcher Agent
 Fetches raw datasets:
 ```bash
 python modules/fetcher/main.py
 ```
 
-### 2. Parser Agent
+### 3. Parser Agent
 Parses raw files and maps to SEPSES classes:
 ```bash
 python modules/parser/main.py
 ```
 
-### 3. Linking Agent
+### 4. Linking Agent
 Identifies and maps relationships:
 ```bash
 python modules/linking/main.py
 ```
 
-### 4. Validation Agent
+### 5. Validation Agent
 Validates semantic compliance and structure:
 ```bash
 python modules/validation/main.py
 ```
 
-### 5. SPARQL Endpoint
+### 6. SPARQL Endpoint
 Start Virtuoso Database:
 ```bash
 cd sparql
@@ -105,8 +107,6 @@ Verify the endpoint:
 python verify.py
 ```
 
----
-
 ## Expected Outputs
 
 - **Fetcher Agent:** Raw cybersecurity data files stored in `modules/fetcher/cache/`.
@@ -114,11 +114,9 @@ python verify.py
 - **Linking Agent:** Linked Turtle files containing relationship triples, saved in `modules/linking/output/`.
 - **Validation Agent:** Validation reports summarizing triple counts, subjects, errors, and warnings.
 - **SPARQL Endpoint:** A fully queryable Knowledge Graph at `http://localhost:8890/sparql` with named graphs such as `http://w3id.org/sepses/graph/cve`.
-
----
+- **Agentic Web UI:** A Next.js frontend at `http://localhost:3000` powered by a LangChain agent that converts natural language security queries into automated SPARQL executions.
 
 ## Security Use Cases
-We have documented 3 primary security query use cases in the [USE_CASES.md](file:///mnt/shared/Kuliah/S1/UGM/4/MRPL/tugas_3/cskg/sparql/use_cases/USE_CASES.md) file, showing exact query inputs and outputs:
 1. **Vulnerability Attack Chain Analysis** (`CVE` -> `CWE` -> `CAPEC` -> `ATT&CK`)
 2. **Exploited Vulnerability Prioritization** (`CISA KEV` -> `ICSA` -> `CVE`)
 3. **ATT&CK Technique Coverage Mapping** (`CAPEC` -> `ATT&CK`)
