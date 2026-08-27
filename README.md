@@ -2,6 +2,7 @@
 
 This project implements a multi-agent pipeline to fetch, parse, link, validate, and query cybersecurity data (CVE, CWE, CAPEC, ATT&CK) using the SEPSES ontology.
 
+
 ## Installation
 
 ### Prerequisites
@@ -129,3 +130,21 @@ python verify.py
 - **Stale Data:** Fetched data is cached; you must clear the cache or adjust fetch instructions to pull the latest upstream vulnerability advisories.
 - **Limited CVE & CPE Data (Demo Mode):** The CVE and CPE fetchers are currently capped at 100 records for development purposes. This causes a high error rate in `icsa_to_cve.ttl` and `cve_to_cpe.ttl` because most CVEs referenced by the ICSA are missing from the base dataset. 
   * **Fix:** Remove `MAX_DEMO = 100` in `modules/fetcher/fetchers/nvd.py` and use an NVD API key to perform a full fetch (~350K CVEs, estimated to take 2–4 hours).
+
+## Showcase
+
+The project features a Web UI built with Next.js, allowing SOC analysts to query the Knowledge Graph using natural language.
+
+<p align="center">
+  <img src="img/newchat.png" width="49%" alt="New Chat Screen" />
+  <img src="img/history.png" width="49%" alt="History Search" />
+</p>
+
+<p align="center">
+  <img src="img/chat_1.png" width="99%" alt="Agent executing SPARQL query" />
+</p>
+
+<p align="center">
+  <img src="img/chat_2_1.png" width="49%" alt="Agent analysis part 1" />
+  <img src="img/chat_2_2.png" width="49%" alt="Agent analysis part 2" />
+</p>

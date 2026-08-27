@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 
-const SPARQL_ENDPOINT = "http://localhost:8890/sparql";
+const SPARQL_ENDPOINT = process.env.SPARQL_ENDPOINT || "http://localhost:8890/sparql";
 
 const executeSparqlQuery = tool(
   async ({ query }) => {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     if (messages && Array.isArray(messages)) {
       // Don't pass the initial static greeting into the LLM context if possible to save tokens, 
       // but if we do, it's fine. We'll map them all.
-      inputMessages = messages.map(m => 
+      inputMessages = messages.map(m =>
         m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)
       );
     } else if (message) {

@@ -38,5 +38,6 @@ services:
       - .env
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SPARQL_ENDPOINT=http://virtuoso:8890/sparql
     depends_on:
       - virtuoso
