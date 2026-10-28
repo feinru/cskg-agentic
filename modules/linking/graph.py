@@ -18,21 +18,15 @@ def route_reviewer(state: LinkingState) -> str:
 
 
 builder = StateGraph(LinkingState)
-
 builder.add_node("planner", planner)
 builder.add_node("executor", executor)
 builder.add_node("reviewer", reviewer)
-
 builder.set_entry_point("planner")
 builder.add_edge("planner", "executor")
-
 builder.add_conditional_edges(
-    "executor", route_executor,
-    {"executor": "executor", "reviewer": "reviewer"}
+    "executor", route_executor, {"executor": "executor", "reviewer": "reviewer"}
 )
 builder.add_conditional_edges(
-    "reviewer", route_reviewer,
-    {END: END, "executor": "executor"}
+    "reviewer", route_reviewer, {END: END, "executor": "executor"}
 )
-
 graph = builder.compile()

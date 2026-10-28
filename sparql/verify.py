@@ -1,90 +1,65 @@
-"""
-verify.py — Verifikasi SPARQL endpoint SEPSES Cyber-KG
-"""
-
+import os
+import sys
+from pathlib import Path
 import requests
 
-import os
-VIRTUOSO_HOST = os.environ.get("VIRTUOSO_HOST", "localhost")
-SPARQL_ENDPOINT = f"http://{VIRTUOSO_HOST}:8890/sparql"
+parent_dir = Path(__file__).resolve().parent.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
+from modules.config import VIRTUOSO_HOST, VIRTUOSO_SPARQL as SPARQL_ENDPOINT
 
 
 def query(sparql: str, description: str) -> bool:
-    print(f"\n  [{description}]")
-    print(f"  Query: {sparql[:80]}...")
+    print(f"\n[{description}]")
+    print(f"Query: {sparql[:80]}...")
     resp = requests.get(
         SPARQL_ENDPOINT,
         params={"query": sparql, "format": "application/sparql-results+json"},
         timeout=30,
     )
     if resp.status_code != 200:
-        print(f"  ✗ Error: {resp.status_code}")
+        print(f"[FAIL] Error status: {resp.status_code}")
         return False
-
     bindings = resp.json()["results"]["bindings"]
     for row in bindings[:3]:
-        print("  →", {k: v["value"] for k, v in row.items()})
-    print(f"  ✓ {len(bindings)} hasil")
+        print("->", {k: v["value"] for k, v in row.items()})
+    print(f"[OK] {len(bindings)} results returned")
     return True
 
 
 def main():
-    print("=" * 60)
-    print("  SPARQL ENDPOINT VERIFICATION — SEPSES Cyber-KG")
-    print("=" * 60)
-
+    print("[SPARQL] Verification: SEPSES Cyber-KG")
     tests = [
         (
             "SELECT (COUNT(*) AS ?total) WHERE { ?s ?p ?o }",
-            "Total triple di seluruh graph",
+            "Total triples across all graphs",
         ),
-        ("SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }", "Daftar named graphs"),
+        ("SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }", "List named graphs"),
         (
-            """SELECT ?cve ?desc WHERE {
-               GRAPH <http://w3id.org/sepses/graph/cve> {
-                 ?cve a <http://w3id.org/sepses/vocab/ref/cve#CVE> ;
-                      <http://w3id.org/sepses/vocab/ref/cve#id> ?desc .
-               }
-             } LIMIT 3""",
+            "SELECT ?cve ?desc WHERE {\n               GRAPH <http://w3id.org/sepses/graph/cve> {\n                 ?cve a <http://w3id.org/sepses/vocab/ref/cve#CVE> ;\n                      <http://w3id.org/sepses/vocab/ref/cve#id> ?desc .\n               }\n             } LIMIT 3",
             "Sample CVE entries",
         ),
         (
-            """SELECT ?cwe ?name WHERE {
-               GRAPH <http://w3id.org/sepses/graph/cwe> {
-                 ?cwe a <http://w3id.org/sepses/vocab/ref/cwe#CWE> ;
-                      <http://w3id.org/sepses/vocab/ref/cwe#name> ?name .
-               }
-             } LIMIT 3""",
+            "SELECT ?cwe ?name WHERE {\n               GRAPH <http://w3id.org/sepses/graph/cwe> {\n                 ?cwe a <http://w3id.org/sepses/vocab/ref/cwe#CWE> ;\n                       <http://w3id.org/sepses/vocab/ref/cwe#name> ?name .\n               }\n             } LIMIT 3",
             "Sample CWE entries",
         ),
         (
-            """SELECT ?capec ?attck WHERE {
-               GRAPH <http://w3id.org/sepses/graph/capec_to_attck> {
-                 ?capec <http://w3id.org/sepses/vocab/ref/capec#hasRelatedAttackPattern> ?attck .
-               }
-             } LIMIT 3""",
-            "Sample CAPEC → ATT&CK links",
+            "SELECT ?capec ?attck WHERE {\n               VALUES ?g { <http://w3id.org/sepses/graph/capec2attck> <http://w3id.org/sepses/graph/capec_to_attck> }\n               GRAPH ?g {\n                 ?capec <http://w3id.org/sepses/vocab/ref/capec#hasRelatedAttackPattern> ?attck .\n               }\n             } LIMIT 3",
+            "Sample CAPEC to ATT&CK links",
         ),
         (
-            """SELECT ?icsa ?cve WHERE {
-               GRAPH <http://w3id.org/sepses/graph/icsa_to_cve> {
-                 ?icsa <http://w3id.org/sepses/vocab/ref/icsa#hasCVE> ?cve .
-               }
-             } LIMIT 3""",
-            "Sample ICSA → CVE links",
+            "SELECT ?icsa ?cve WHERE {\n               VALUES ?g { <http://w3id.org/sepses/graph/icsa2cve> <http://w3id.org/sepses/graph/icsa_to_cve> }\n               GRAPH ?g {\n                 ?icsa <http://w3id.org/sepses/vocab/ref/icsa#hasCVE> ?cve .\n               }\n             } LIMIT 3",
+            "Sample ICSA to CVE links",
         ),
     ]
-
     passed = 0
     for sparql, desc in tests:
         if query(sparql, desc):
             passed += 1
-
-    print(f"\n{'─' * 60}")
-    print(f"  Tests passed: {passed}/{len(tests)}")
-    print(f"\n  Endpoint URL : {SPARQL_ENDPOINT}")
-    print(f"  Web UI       : http://localhost:8890/conductor")
-    print("=" * 60)
+    print(f"\nTests passed: {passed}/{len(tests)}")
+    print(f"Endpoint URL : {SPARQL_ENDPOINT}")
+    print(f"Web UI       : http://localhost:8890/conductor\n")
 
 
 if __name__ == "__main__":

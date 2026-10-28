@@ -1,8 +1,9 @@
-from typing import Optional, Any
-from langgraph.graph import MessagesState
+from typing import TypedDict
 
-class ParserState(MessagesState):
+
+class ParserState(TypedDict, total=False):
     parse_plan: list[dict]
     current_task: dict
     parsed_results: list[dict]
     all_done: bool
+    summary: str

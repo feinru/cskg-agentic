@@ -7,45 +7,30 @@ if __name__ == "__main__" and __package__ is None:
     parent_dir = current_file_path.parent.parent.parent
     if str(parent_dir) not in sys.path:
         sys.path.insert(0, str(parent_dir))
-
-    if Path.cwd().parent.name == "agents" and Path.cwd().name == "linking":
+    if Path.cwd().parent.name in ("agents", "modules") and Path.cwd().name == "linking":
         os.chdir(parent_dir)
-
     from modules.linking.graph import graph
 else:
     from .graph import graph
 
 
-def run_linking_agent():
-    print("=" * 60)
-    print("  LINKING AGENT — Cybersecurity KG Entity Linking Pipeline")
-    print("=" * 60)
-
-    instruction = (
-        "Identifikasi dan bangun relasi antarsumber cybersecurity "
-        "(CVE→CWE→CAPEC→ATT&CK) menggunakan properti ontologi SEPSES. "
-        "Baca output dari parser_agent dan data dari modules.fetcher."
+def run_linking():
+    print("[Linking] Cybersecurity KG Entity Linking Pipeline\n")
+    result = graph.invoke(
+        {
+            "link_plan": [],
+            "current_task": {},
+            "linked_results": [],
+            "all_done": False,
+            "summary": "",
+        }
     )
-    print(f"\nInstruksi: {instruction}\n")
-
-    result = graph.invoke({
-        "messages":       [{"role": "user", "content": instruction}],
-        "link_plan":      [],
-        "current_task":   {},
-        "linked_results": [],
-        "all_done":       False,
-    })
-
-    print("\n" + "=" * 60)
-    print("  HASIL AKHIR LINKING")
-    print("=" * 60)
-
+    print("\n[Linking] Final Results")
     linked_results = result.get("linked_results", [])
     success = [r for r in linked_results if r.get("status") == "success"]
     failed = [r for r in linked_results if r.get("status") != "success"]
-
     for r in linked_results:
-        icon = "✓" if r.get("status") == "success" else "✗"
+        icon = "[OK]" if r.get("status") == "success" else "[FAIL]"
         print(f"\n{icon} {r['link_type'].upper()}")
         print(f"   Predicate : {r.get('predicate', '-')}")
         print(f"   Status    : {r['status']}")
@@ -54,16 +39,13 @@ def run_linking_agent():
             print(f"   Output    : {r['output_file']}")
         if r.get("error"):
             print(f"   Error     : {r['error']}")
-
-    print(f"\n{'─' * 60}")
-    print(f"Berhasil : {len(success)} tugas linking")
-    print(f"Gagal    : {len(failed)} tugas linking")
-    total_triples = sum(r.get("triples_count", 0) for r in linked_results)
-    print(f"Total Triple : {total_triples:,}")
-
-    if result.get("messages"):
-        print(f"\nRingkasan: {result['messages'][-1].content}")
+    print(f"\nSuccessful : {len(success)} linking tasks")
+    print(f"Failed     : {len(failed)} linking tasks")
+    total_triples = sum((r.get("triples_count", 0) for r in linked_results))
+    print(f"Total Triples : {total_triples:,}")
+    if result.get("summary"):
+        print(f"Summary       : {result['summary']}")
 
 
 if __name__ == "__main__":
-    run_linking_agent()
+    run_linking()

@@ -1,42 +1,46 @@
-from graph import graph
+import sys
+import os
+from pathlib import Path
 
-print("=" * 50)
-print("  FETCHER AGENT — Cybersecurity KG Pipeline")
-print("=" * 50)
+if __name__ == "__main__" and __package__ is None:
+    current_file_path = Path(__file__).resolve()
+    parent_dir = current_file_path.parent.parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    if str(current_file_path.parent) not in sys.path:
+        sys.path.insert(0, str(current_file_path.parent))
 
-# Ganti instruksi di bawah sesuai kebutuhan:
-instruksi = "Fetch semua data cybersecurity yang tersedia."
-# instruksi = "Fetch semua data cybersecurity yang tersedia."
-# instruksi = "Saya butuh data CVE dan CWE untuk analisis kerentanan."
 
-print(f"\nInstruksi: {instruksi}\n")
+def run_fetcher():
+    from graph import graph
 
-result = graph.invoke({
-    "messages":       [{"role": "user", "content": instruksi}],
-    "fetch_plan":     [],
-    "current_source": "",
-    "results":        [],
-    "all_done":       False,
-})
+    print("[Fetcher] Cybersecurity KG Pipeline\n")
+    result = graph.invoke(
+        {
+            "fetch_plan": [],
+            "current_source": "",
+            "results": [],
+            "all_done": False,
+            "summary": "",
+        }
+    )
+    print("\n[Fetcher] Results Summary")
+    success = [r for r in result["results"] if r["status"] in ("success", "cached")]
+    failed = [r for r in result["results"] if r["status"] == "failed"]
+    for r in result["results"]:
+        icon = "[OK]" if r["status"] in ("success", "cached") else "[FAIL]"
+        print(f"\n{icon} {r['source'].upper()}")
+        print(f"   Status  : {r['status']}")
+        print(f"   Records : {r.get('records', 0):,}")
+        if r["file_path"]:
+            print(f"   File    : {r['file_path']}")
+        if r["error"]:
+            print(f"   Error   : {r['error']}")
+    print(f"\nSuccessful : {len(success)} sources")
+    print(f"Failed     : {len(failed)} sources")
+    if result.get("summary"):
+        print(f"Summary    : {result['summary']}")
 
-print("\n" + "=" * 50)
-print("  HASIL AKHIR")
-print("=" * 50)
 
-success = [r for r in result["results"] if r["status"] in ("success", "cached")]
-failed  = [r for r in result["results"] if r["status"] == "failed"]
-
-for r in result["results"]:
-    icon = "✓" if r["status"] in ("success", "cached") else "✗"
-    print(f"\n{icon} {r['source'].upper()}")
-    print(f"   Status  : {r['status']}")
-    print(f"   Records : {r.get('records', 0):,}")
-    if r["file_path"]:
-        print(f"   File    : {r['file_path']}")
-    if r["error"]:
-        print(f"   Error   : {r['error']}")
-
-print(f"\n{'─'*50}")
-print(f"Berhasil : {len(success)} sumber")
-print(f"Gagal    : {len(failed)} sumber")
-print(f"\nRingkasan: {result['messages'][-1].content}")
+if __name__ == "__main__":
+    run_fetcher()

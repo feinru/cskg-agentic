@@ -1,21 +1,23 @@
-"""
-load.py — Load semua TTL ke Virtuoso via isql bulk loader
-"""
-
-import subprocess
-import requests
-from pathlib import Path
-
 import os
-VIRTUOSO_HOST = os.environ.get("VIRTUOSO_HOST", "localhost")
-VIRTUOSO_SPARQL = f"http://{VIRTUOSO_HOST}:8890/sparql"
-GRAPH_BASE = "http://w3id.org/sepses/graph/"
-TOLOAD_DIR = Path(__file__).parent / "data"
-CONTAINER_NAME = os.environ.get("VIRTUOSO_CONTAINER", "cskg-sparql")
+import subprocess
+import sys
+from pathlib import Path
+import requests
+
+parent_dir = Path(__file__).resolve().parent.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
+from modules.config import (
+    GRAPH_BASE,
+    SPARQL_DATA_DIR as TOLOAD_DIR,
+    VIRTUOSO_CONTAINER as CONTAINER_NAME,
+    VIRTUOSO_HOST,
+    VIRTUOSO_SPARQL,
+)
 
 
 def run_isql(command: str) -> tuple[bool, str]:
-    """Jalankan command via isql di dalam container Virtuoso."""
     result = subprocess.run(
         [
             "docker",
@@ -32,36 +34,30 @@ def run_isql(command: str) -> tuple[bool, str]:
         timeout=120,
     )
     output = result.stdout + result.stderr
-    return result.returncode, output
+    return (result.returncode, output)
 
 
 def load_ttl_via_isql(ttl_file: Path, graph_uri: str) -> bool:
-    """Load satu file TTL ke named graph via isql LOAD command."""
-    print(f"  Loading {ttl_file.name} → <{graph_uri}>")
-
-    command = f"SPARQL LOAD <file:///opt/virtuoso-opensource/vsp/toload/{ttl_file.name}> INTO GRAPH <{graph_uri}>;"
+    print(f"Loading {ttl_file.name} -> <{graph_uri}>")
+    command = f"SPARQL CLEAR GRAPH <{graph_uri}>; SPARQL LOAD <file:///opt/virtuoso-opensource/vsp/toload/{ttl_file.name}> INTO GRAPH <{graph_uri}>;"
     returncode, output = run_isql(command)
-
-    # isql return 0 = sukses, cek juga tidak ada error message
     if returncode == 0 and "*** Error" not in output:
-        print(f"  ✓ Berhasil: {ttl_file.name}")
+        print(f"[OK] Loaded: {ttl_file.name}")
         return True
     else:
-        # Filter banner koneksi, tampilkan hanya error-nya
         error_lines = [
             l
             for l in output.splitlines()
             if "***" in l or "Error" in l or "error" in l.lower()
         ]
         print(
-            f"  ✗ Gagal: {chr(10).join(error_lines) if error_lines else output[:200]}"
+            f"[FAIL] Error loading {ttl_file.name}: {(chr(10).join(error_lines) if error_lines else output[:200])}"
         )
         return False
 
 
 def verify_endpoint():
-    """Test basic SPARQL query ke endpoint."""
-    print("\n  Verifikasi endpoint...")
+    print("\nVerifying SPARQL endpoint...")
     query = "SELECT (COUNT(*) AS ?total) WHERE { ?s ?p ?o }"
     resp = requests.get(
         VIRTUOSO_SPARQL,
@@ -71,28 +67,24 @@ def verify_endpoint():
     if resp.status_code == 200:
         data = resp.json()
         total = data["results"]["bindings"][0]["total"]["value"]
-        print(f"  ✓ Endpoint OK — Total triple: {total}")
+        print(f"[OK] Endpoint responsive, total triples: {total}")
         return True
     else:
-        print(f"  ✗ Endpoint error: {resp.status_code}")
+        print(f"[FAIL] Endpoint error status: {resp.status_code}")
         return False
 
 
 def main():
-    print("=" * 60)
-    print("  SPARQL ENDPOINT LOADER — SEPSES Cyber-KG")
-    print("=" * 60)
-
-    ttl_files = sorted(TOLOAD_DIR.glob("*.ttl"))
+    print("[SPARQL] Loader: SEPSES Cyber-KG")
+    ttl_files = sorted(
+        [f for f in TOLOAD_DIR.glob("*.ttl") if not f.name.endswith("_simulated.ttl")]
+    )
     if not ttl_files:
-        print("  ERROR: Tidak ada file .ttl di folder data/")
+        print("ERROR: No .ttl files found in data directory")
         return
-
-    print(f"\n  Ditemukan {len(ttl_files)} file TTL untuk dimuat.\n")
-
+    print(f"\nFound {len(ttl_files)} TTL files to load.\n")
     success = 0
     failed = 0
-
     for ttl_file in ttl_files:
         graph_uri = GRAPH_BASE + ttl_file.stem
         result = load_ttl_via_isql(ttl_file, graph_uri)
@@ -100,18 +92,13 @@ def main():
             success += 1
         else:
             failed += 1
-
-    print(f"\n{'─' * 60}")
-    print(f"  Berhasil : {success} file")
-    print(f"  Gagal    : {failed} file")
-
+    print(f"\nSuccessfully loaded : {success} files")
+    print(f"Failed loads        : {failed} files")
     if success > 0:
         verify_endpoint()
-
-    print(f"\n  SPARQL Endpoint : http://localhost:8890/sparql")
-    print(f"  Web UI          : http://localhost:8890/conductor")
-    print(f"  Named Graphs    : {GRAPH_BASE}*")
-    print("=" * 60)
+    print(f"\nSPARQL Endpoint : http://localhost:8890/sparql")
+    print(f"Web UI          : http://localhost:8890/conductor")
+    print(f"Named Graphs    : {GRAPH_BASE}*\n")
 
 
 if __name__ == "__main__":

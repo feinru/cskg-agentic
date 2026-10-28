@@ -60,6 +60,7 @@ ALWAYS write and execute a SPARQL query before answering.
 Here is the ontology schema you MUST use for your SPARQL queries:
 - Prefixes:
   PREFIX cve:   <http://w3id.org/sepses/vocab/ref/cve#>
+  PREFIX cpe:   <http://w3id.org/sepses/vocab/ref/cpe#>
   PREFIX cwe:   <http://w3id.org/sepses/vocab/ref/cwe#>
   PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
   PREFIX attck: <http://w3id.org/sepses/vocab/ref/attack#>
@@ -68,23 +69,33 @@ Here is the ontology schema you MUST use for your SPARQL queries:
 - Available Graphs and Relations:
   1. GRAPH <http://w3id.org/sepses/graph/cve>
      - ?cve cve:id ?cveId .
-  2. GRAPH <http://w3id.org/sepses/graph/cve_to_cwe>
+     - ?cve cve:description ?cveDesc .
+  2. GRAPH <http://w3id.org/sepses/graph/cve2cwe> (or <http://w3id.org/sepses/graph/cve_to_cwe>)
      - ?cve cve:hasCWE ?cweNode .
-  3. GRAPH <http://w3id.org/sepses/graph/cwe>
+  3. GRAPH <http://w3id.org/sepses/graph/cve2cpe> (or <http://w3id.org/sepses/graph/cve_to_cpe>)
+     - ?cve cve:hasCPE ?cpeNode .
+  4. GRAPH <http://w3id.org/sepses/graph/cpe>
+     - ?cpeNode cpe:cpe23Uri ?cpeUri .
+     - ?cpeNode cpe:id ?cpeNameId .
+  5. GRAPH <http://w3id.org/sepses/graph/cwe>
      - ?cweNode cwe:name ?cweName .
-  4. GRAPH <http://w3id.org/sepses/graph/cwe_to_capec>
+     - ?cweNode cwe:description ?cweDesc .
+  6. GRAPH <http://w3id.org/sepses/graph/cwe2capec> (or <http://w3id.org/sepses/graph/cwe_to_capec>)
      - ?cweNode cwe:hasCAPEC ?capecNode .
-  5. GRAPH <http://w3id.org/sepses/graph/capec_to_attck>
+  7. GRAPH <http://w3id.org/sepses/graph/capec2attck> (or <http://w3id.org/sepses/graph/capec_to_attck>)
      - ?capecNode capec:hasRelatedAttackPattern ?attckNode .
-  6. GRAPH <http://w3id.org/sepses/graph/attck_enterprise>
+  8. GRAPH <http://w3id.org/sepses/graph/attck_enterprise> & GRAPH <http://w3id.org/sepses/graph/attck_ics>
      - ?attckNode attck:techniqueId ?techniqueId .
      - ?attckNode attck:name ?techniqueName .
      - ?attckNode attck:description ?techniqueDesc .
-  7. GRAPH <http://w3id.org/sepses/graph/icsa> (CISA Known Exploited Vulnerabilities)
+  9. GRAPH <http://w3id.org/sepses/graph/icsa> (CISA Known Exploited Vulnerabilities)
      - ?icsaNode a icsa:ICSA .
      - ?icsaNode icsa:cveID ?cveId .
      - ?icsaNode icsa:vendorProject ?vendor .
      - ?icsaNode icsa:product ?product .
+     - ?icsaNode icsa:vulnerabilityName ?vulnName .
+  10. GRAPH <http://w3id.org/sepses/graph/icsa2cve> (or <http://w3id.org/sepses/graph/icsa_to_cve>)
+     - ?icsaNode icsa:hasCVE ?cve .
 
 When the user asks a question:
 1. Write the appropriate SPARQL query string based on the user's intent. 

@@ -1,64 +1,53 @@
 import os
 from pathlib import Path
+from modules.config import PARSER_OUTPUT_DIR, LINKING_OUTPUT_DIR
 from ..state import ValidationState
 
 
 def planner(state: ValidationState) -> ValidationState:
-    """
-    Node Planner: Menganalisis hasil keluaran linking_agent dan menyusun rencana validasi.
-    """
-    print("\n  [PLANNER] Memulai analisis output modules.linking...")
-
-    linking_output_dir = Path(__file__).resolve().parent.parent.parent / "linking" / "output"
+    print("\n[Validation] Analyzing parser and linking outputs for validation...")
+    parser_output_dir = PARSER_OUTPUT_DIR
+    linking_output_dir = LINKING_OUTPUT_DIR
     validation_plan = []
-
-    # Format-format berkas Turtle yang diharapkan akan divalidasi
-    expected_links = [
-        "cve_to_cwe",
-        "cve_to_cpe",
-        "cwe_to_capec",
-        "capec_to_attck",
-        "icsa_to_cve"
-    ]
-
     found_files = []
-
-    # 1. Pindai direktori modules/linking/output
-    if linking_output_dir.exists():
-        for file in linking_output_dir.iterdir():
+    if parser_output_dir.exists():
+        for file in sorted(parser_output_dir.iterdir()):
             if file.is_file() and file.suffix.lower() == ".ttl":
-                found_files.append(file)
-                print(f"  [PLANNER] Ditemukan berkas grafik Turtle: {file.name}")
-    else:
-        print("  [PLANNER] WARNING: Direktori modules/linking/output belum terbentuk.")
-
-    # 2. Susun tugas validasi berdasarkan berkas yang ditemukan
+                found_files.append((file, "parser"))
+                print(f"[Validation] Found base entity graph: {file.name}")
+    if linking_output_dir.exists():
+        for file in sorted(linking_output_dir.iterdir()):
+            if file.is_file() and file.suffix.lower() == ".ttl":
+                found_files.append((file, "linking"))
+                print(f"[Validation] Found relation graph: {file.name}")
     if found_files:
-        for file_path in sorted(found_files):
+        for file_path, origin in found_files:
             stem = file_path.stem.lower()
+            desc = (
+                f"Semantic validation for base entity {stem.upper()}"
+                if origin == "parser"
+                else f"Semantic validation for relation graph {stem.upper()}"
+            )
             task = {
                 "file_name": file_path.name,
                 "file_path": str(file_path),
+                "origin": origin,
                 "link_type": stem,
-                "description": f"Validasi semantik untuk grafik relasi {stem.upper()}"
+                "description": desc,
             }
             validation_plan.append(task)
-            print(f"  [PLANNER] ✓ Dijadwalkan: {file_path.name}")
+            print(f"[Validation] Scheduled: {file_path.name}")
     else:
-        print("  [PLANNER] WARNING: Tidak ada berkas .ttl ditemukan di modules/linking/output.")
-        print("  [PLANNER] Menggunakan berkas simulasi atau menunggu pipeline dijalankan.")
-
-    # 3. Ambil tugas pertama jika rencana tidak kosong
+        print("[Validation] WARNING: No .ttl files found to validate.")
     current_task = validation_plan.pop(0) if validation_plan else {}
-
     if current_task:
-        print(f"  [PLANNER] Tugas pertama disiapkan: {current_task['file_name']}")
+        print(f"[Validation] First task queued: {current_task['file_name']}")
     else:
-        print("  [PLANNER] Tidak ada tugas validasi aktif saat ini.")
-
+        print("[Validation] No active validation tasks.")
     return {
         "validation_plan": validation_plan,
         "current_task": current_task,
         "validation_results": [],
-        "all_done": False
+        "all_done": False,
+        "summary": "",
     }

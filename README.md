@@ -1,6 +1,6 @@
 # Cybersecurity Knowledge Graph (CSKG) Pipeline
 
-This project implements a multi-agent pipeline to fetch, parse, link, validate, and query cybersecurity data (CVE, CWE, CAPEC, ATT&CK) using the SEPSES ontology.
+This project implements an ETL pipeline to fetch, parse, link, validate, and query cybersecurity data (CVE, CWE, CAPEC, ATT&CK) using the SEPSES ontology.
 
 
 ## Installation
@@ -20,13 +20,13 @@ cd cskg-agentic
 
 ### 2. Configuration
 
-Configuration is primarily handled through environment variables and agent-specific `.env` files.
+Configuration is primarily handled through environment variables and `.env` files.
 
 ### Environment Variables
 
 | Variable | Description | Required / Optional | Default Value |
 | --- | --- | --- | --- |
-| `GOOGLE_API_KEY` | Gemini model access for the query/validation agents. | **Required** | None |
+| `GOOGLE_API_KEY` | Gemini model access for the SOC analyst chat interface. | **Required** | None |
 | `NVD_API_KEY` | Optional key to bypass NVD rate limits (fetches faster). | Optional | None |
 | `VIRTUOSO_HOST` | Host address of the Virtuoso SPARQL endpoint. | Optional | `localhost` (or `virtuoso` in Compose) |
 | `VIRTUOSO_CONTAINER`| Name of the running Virtuoso Docker container. | Optional | `cskg-sparql` |
@@ -36,7 +36,7 @@ Rename `.env.example` to `.env` in the project root:
 cp .env.example .env
 ```
 
-> **Do not forget to add your `GOOGLE_API_KEY` inside the new `.env` file!** The pipeline and the Agentic Web UI will fail to run if this key is missing.
+> **Do not forget to add your `GOOGLE_API_KEY` inside the new `.env` file!** The Chat Web UI requires this key to convert user questions into SPARQL queries.
 
 ## Quick Start with Docker
 
@@ -69,25 +69,25 @@ The pipeline is modular and can also be run sequentially on your host machine wi
 pip install -r requirements.txt
 ```
 
-### 2. Fetcher Agent
+### 2. Fetcher Module
 Fetches raw datasets:
 ```bash
 python modules/fetcher/main.py
 ```
 
-### 3. Parser Agent
+### 3. Parser Module
 Parses raw files and maps to SEPSES classes:
 ```bash
 python modules/parser/main.py
 ```
 
-### 4. Linking Agent
+### 4. Linking Module
 Identifies and maps relationships:
 ```bash
 python modules/linking/main.py
 ```
 
-### 5. Validation Agent
+### 5. Validation Module
 Validates semantic compliance and structure:
 ```bash
 python modules/validation/main.py
@@ -110,12 +110,13 @@ python verify.py
 
 ## Expected Outputs
 
-- **Fetcher Agent:** Raw cybersecurity data files stored in `modules/fetcher/cache/`.
-- **Parser Agent:** Parsed Turtle (`.ttl`) files mapped to SEPSES ontology.
-- **Linking Agent:** Linked Turtle files containing relationship triples, saved in `modules/linking/output/`.
-- **Validation Agent:** Validation reports summarizing triple counts, subjects, errors, and warnings.
+- **Fetcher Module:** Raw cybersecurity data files stored in `modules/fetcher/cache/`.
+- **Parser Module:** Parsed Turtle (`.ttl`) files mapped to SEPSES ontology.
+- **Linking Module:** Linked Turtle files containing relationship triples, saved in `modules/linking/output/`.
+- **Validation Module:** Validation reports summarizing triple counts, subjects, errors, and warnings.
 - **SPARQL Endpoint:** A fully queryable Knowledge Graph at `http://localhost:8890/sparql` with named graphs such as `http://w3id.org/sepses/graph/cve`.
 - **Agentic Web UI:** A Next.js frontend at `http://localhost:3000` powered by a LangChain agent that converts natural language security queries into automated SPARQL executions.
+
 
 ## Security Use Cases
 1. **Vulnerability Attack Chain Analysis** (`CVE` -> `CWE` -> `CAPEC` -> `ATT&CK`)
@@ -141,10 +142,10 @@ The project features a Web UI built with Next.js, allowing SOC analysts to query
 </p>
 
 <p align="center">
-  <img src="img/chat_1.png" width="99%" alt="Agent executing SPARQL query" />
+  <img src="img/chat1.png" width="99%" alt="Agent executing SPARQL query" />
 </p>
 
 <p align="center">
-  <img src="img/chat_2_1.png" width="49%" alt="Agent analysis part 1" />
-  <img src="img/chat_2_2.png" width="49%" alt="Agent analysis part 2" />
+  <img src="img/chat21.png" width="49%" alt="Agent analysis part 1" />
+  <img src="img/chat22.png" width="49%" alt="Agent analysis part 2" />
 </p>

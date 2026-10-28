@@ -3,12 +3,14 @@ import re
 import traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
-
+from modules.config import (
+    LINKING_OUTPUT_DIR,
+    NAMESPACES,
+    RESOURCE_BASE_MAP as RESOURCE_BASE,
+)
 from ..state import LinkingState
-from ..config import NAMESPACES, RESOURCE_BASE
 
 NS_CVE = Namespace(NAMESPACES["cve"])
 NS_CWE = Namespace(NAMESPACES["cwe"])
@@ -21,9 +23,8 @@ NS_ICSA = Namespace(NAMESPACES["icsa"])
 
 def executor(state: LinkingState) -> LinkingState:
     task = state.get("current_task")
-
     if not task:
-        print("  [EXECUTOR] Tidak ada tugas yang harus dieksekusi.")
+        print("[Linking] No task to execute.")
         linked_results = state.get("linked_results", [])
         link_plan = state.get("link_plan", [])
         next_task = link_plan.pop(0) if link_plan else {}
@@ -32,13 +33,10 @@ def executor(state: LinkingState) -> LinkingState:
             "current_task": next_task,
             "linked_results": linked_results,
         }
-
     link_type = task["link_type"]
     predicate_str = task["predicate"]
     subject_files = task.get("subject_files", [])
-
-    print(f"  [EXECUTOR] Memproses linking: {link_type} ({predicate_str})...")
-
+    print(f"[Linking] Processing linking: {link_type} ({predicate_str})...")
     result = {
         "link_type": link_type,
         "predicate": predicate_str,
@@ -47,50 +45,39 @@ def executor(state: LinkingState) -> LinkingState:
         "output_file": None,
         "error": None,
     }
-
     try:
         g = Graph()
         for prefix, uri in NAMESPACES.items():
             g.bind(prefix, Namespace(uri))
-
         predicate_uri = _resolve_predicate(predicate_str)
         triples_count = 0
-
-        if link_type == "cve_to_cwe":
+        if link_type in ("cve2cwe", "cve_to_cwe"):
             triples_count = _link_cve_to_cwe(g, subject_files, predicate_uri)
-        elif link_type == "cve_to_cpe":
+        elif link_type in ("cve2cpe", "cve_to_cpe"):
             triples_count = _link_cve_to_cpe(g, subject_files, predicate_uri)
-        elif link_type == "cwe_to_capec":
+        elif link_type in ("cwe2capec", "cwe_to_capec"):
             triples_count = _link_cwe_to_capec(g, subject_files, predicate_uri)
-        elif link_type == "capec_to_attck":
+        elif link_type in ("capec2attck", "capec_to_attck"):
             triples_count = _link_capec_to_attck(g, subject_files, predicate_uri)
-        elif link_type == "icsa_to_cve":
+        elif link_type in ("icsa2cve", "icsa_to_cve"):
             triples_count = _link_icsa_to_cve(g, subject_files, predicate_uri)
         else:
-            print(f"  [EXECUTOR] WARNING: Tipe linking tidak dikenali: {link_type}")
-
-        out_dir = Path("modules/linking/output")
-        out_dir.mkdir(parents=True, exist_ok=True)
+            print(f"[Linking] WARNING: Unknown linking type: {link_type}")
+        out_dir = LINKING_OUTPUT_DIR
         out_file = out_dir / f"{link_type}.ttl"
-
         g.serialize(destination=str(out_file), format="turtle")
-
         result["status"] = "success"
         result["triples_count"] = triples_count
         result["output_file"] = str(out_file)
-        print(f"  [EXECUTOR] ✓ Berhasil: {triples_count} triple ditulis ke {out_file}")
-
+        print(f"[Linking] [OK] Success: {triples_count} triples written to {out_file}")
     except Exception as e:
         error_msg = f"{str(e)}\n{traceback.format_exc()}"
-        print(f"  [EXECUTOR] ✗ Error pada {link_type}: {error_msg}")
+        print(f"[Linking] [FAIL] Error on {link_type}: {error_msg}")
         result["error"] = str(e)
-
     linked_results = state.get("linked_results", [])
     linked_results.append(result)
-
     link_plan = state.get("link_plan", [])
     next_task = link_plan.pop(0) if link_plan else {}
-
     return {
         "link_plan": link_plan,
         "current_task": next_task,
@@ -120,9 +107,9 @@ def _strip_ns(tag: str) -> str:
 def _sanitize_uri_component(value: str) -> str:
     if not value:
         return value
-    value = re.sub(r'<[^>]+>', '', value)
-    value = re.sub(r'[\x00-\x1f]', '', value)
-    value = re.sub(r'[\s"\'{}<>|\\^`\[\]]', '_', value)
+    value = re.sub("<[^>]+>", "", value)
+    value = re.sub("[\\x00-\\x1f]", "", value)
+    value = re.sub("[\\s\"\\'{}<>|\\\\^`\\[\\]]", "_", value)
     return value
 
 
@@ -132,25 +119,21 @@ def _link_cve_to_cwe(g: Graph, subject_files: list[str], predicate: URIRef) -> i
         try:
             data = _load_json_data(file_path)
         except Exception as e:
-            print(f"  [EXECUTOR] Gagal membaca {file_path}: {e}")
+            print(f"[EXECUTOR] Failed to read {file_path}: {e}")
             continue
-
         vulnerabilities = []
         if isinstance(data, dict) and "vulnerabilities" in data:
             vulnerabilities = data["vulnerabilities"]
         elif isinstance(data, list):
             vulnerabilities = data
-
         for vuln in vulnerabilities:
             cve_data = vuln.get("cve", {})
             cve_id = cve_data.get("id")
             if not cve_id:
                 continue
-
             cve_id = _sanitize_uri_component(cve_id)
             subject_uri = URIRef(RESOURCE_BASE["cve"] + cve_id)
             g.add((subject_uri, RDF.type, NS_CVE.CVE))
-
             weaknesses = cve_data.get("weaknesses", [])
             for weakness in weaknesses:
                 for desc in weakness.get("description", []):
@@ -159,9 +142,7 @@ def _link_cve_to_cwe(g: Graph, subject_files: list[str], predicate: URIRef) -> i
                         cwe_value = _sanitize_uri_component(cwe_value)
                         object_uri = URIRef(RESOURCE_BASE["cwe"] + cwe_value)
                         g.add((subject_uri, predicate, object_uri))
-                        g.add((object_uri, RDF.type, NS_CWE.CWE))
                         count += 1
-
     return count
 
 
@@ -171,25 +152,21 @@ def _link_cve_to_cpe(g: Graph, subject_files: list[str], predicate: URIRef) -> i
         try:
             data = _load_json_data(file_path)
         except Exception as e:
-            print(f"  [EXECUTOR] Gagal membaca {file_path}: {e}")
+            print(f"[EXECUTOR] Failed to read {file_path}: {e}")
             continue
-
         vulnerabilities = []
         if isinstance(data, dict) and "vulnerabilities" in data:
             vulnerabilities = data["vulnerabilities"]
         elif isinstance(data, list):
             vulnerabilities = data
-
         for vuln in vulnerabilities:
             cve_data = vuln.get("cve", {})
             cve_id = cve_data.get("id")
             if not cve_id:
                 continue
-
             cve_id = _sanitize_uri_component(cve_id)
             subject_uri = URIRef(RESOURCE_BASE["cve"] + cve_id)
             g.add((subject_uri, RDF.type, NS_CVE.CVE))
-
             configurations = cve_data.get("configurations", [])
             for config in configurations:
                 for node in config.get("nodes", []):
@@ -200,9 +177,7 @@ def _link_cve_to_cpe(g: Graph, subject_files: list[str], predicate: URIRef) -> i
                             cpe_safe = _sanitize_uri_component(cpe_safe)
                             object_uri = URIRef(RESOURCE_BASE["cpe"] + cpe_safe)
                             g.add((subject_uri, predicate, object_uri))
-                            g.add((object_uri, RDF.type, NS_CPE.CPE))
                             count += 1
-
     return count
 
 
@@ -215,9 +190,8 @@ def _link_cwe_to_capec(g: Graph, subject_files: list[str], predicate: URIRef) ->
             elif file_path.endswith(".json"):
                 count += _link_cwe_to_capec_json(g, file_path, predicate)
         except Exception as e:
-            print(f"  [EXECUTOR] Gagal memproses {file_path}: {e}")
+            print(f"[EXECUTOR] Failed to process {file_path}: {e}")
             continue
-
     return count
 
 
@@ -225,40 +199,35 @@ def _link_cwe_to_capec_xml(g: Graph, file_path: str, predicate: URIRef) -> int:
     count = 0
     tree = ET.parse(file_path)
     root = tree.getroot()
-
     for elem in root.iter():
         tag = _strip_ns(elem.tag)
         if tag == "Weakness":
             cwe_id = elem.attrib.get("ID")
             if not cwe_id:
                 continue
-
             subject_uri = URIRef(RESOURCE_BASE["cwe"] + f"CWE-{cwe_id}")
             g.add((subject_uri, RDF.type, NS_CWE.CWE))
-
             for child in elem.iter():
                 child_tag = _strip_ns(child.tag)
                 if child_tag == "Related_Attack_Pattern":
                     capec_id = child.attrib.get("CAPEC_ID")
                     if capec_id:
-                        object_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
+                        object_uri = URIRef(
+                            RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}"
+                        )
                         g.add((subject_uri, predicate, object_uri))
-                        g.add((object_uri, RDF.type, NS_CAPEC.CAPEC))
                         count += 1
-
     return count
 
 
 def _link_cwe_to_capec_json(g: Graph, file_path: str, predicate: URIRef) -> int:
     count = 0
     data = _load_json_data(file_path)
-
     weaknesses = []
     if isinstance(data, dict):
         weaknesses = data.get("Weaknesses", data.get("weaknesses", []))
     elif isinstance(data, list):
         weaknesses = data
-
     for weakness in weaknesses:
         cwe_id = weakness.get("ID") or weakness.get("id")
         if not cwe_id:
@@ -266,24 +235,19 @@ def _link_cwe_to_capec_json(g: Graph, file_path: str, predicate: URIRef) -> int:
             cwe_id = attribs.get("ID")
         if not cwe_id:
             continue
-
         subject_uri = URIRef(RESOURCE_BASE["cwe"] + f"CWE-{cwe_id}")
         g.add((subject_uri, RDF.type, NS_CWE.CWE))
-
         related_patterns = weakness.get("Related_Attack_Patterns", [])
         if isinstance(related_patterns, dict):
             related_patterns = related_patterns.get("Related_Attack_Pattern", [])
         if isinstance(related_patterns, dict):
             related_patterns = [related_patterns]
-
         for pattern in related_patterns:
             capec_id = pattern.get("CAPEC_ID") or pattern.get("capec_id")
             if capec_id:
                 object_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
                 g.add((subject_uri, predicate, object_uri))
-                g.add((object_uri, RDF.type, NS_CAPEC.CAPEC))
                 count += 1
-
     return count
 
 
@@ -296,9 +260,8 @@ def _link_capec_to_attck(g: Graph, subject_files: list[str], predicate: URIRef) 
             elif file_path.endswith(".json"):
                 count += _link_capec_to_attck_json(g, file_path, predicate)
         except Exception as e:
-            print(f"  [EXECUTOR] Gagal memproses {file_path}: {e}")
+            print(f"[EXECUTOR] Failed to process {file_path}: {e}")
             continue
-
     return count
 
 
@@ -306,17 +269,14 @@ def _link_capec_to_attck_xml(g: Graph, file_path: str, predicate: URIRef) -> int
     count = 0
     tree = ET.parse(file_path)
     root = tree.getroot()
-
     for elem in root.iter():
         tag = _strip_ns(elem.tag)
         if tag == "Attack_Pattern":
             capec_id = elem.attrib.get("ID")
             if not capec_id:
                 continue
-
             subject_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
             g.add((subject_uri, RDF.type, NS_CAPEC.CAPEC))
-
             for child in elem.iter():
                 child_tag = _strip_ns(child.tag)
                 if child_tag == "Taxonomy_Mapping":
@@ -326,27 +286,24 @@ def _link_capec_to_attck_xml(g: Graph, file_path: str, predicate: URIRef) -> int
                             entry_tag = _strip_ns(entry.tag)
                             if entry_tag == "Entry_ID" and entry.text:
                                 technique_id = entry.text.strip()
-                                # Tambah prefix T kalau belum ada
                                 if not technique_id.startswith("T"):
                                     technique_id = "T" + technique_id
-                                object_uri = URIRef(RESOURCE_BASE["attck"] + technique_id)
+                                object_uri = URIRef(
+                                    RESOURCE_BASE["attck"] + technique_id
+                                )
                                 g.add((subject_uri, predicate, object_uri))
-                                g.add((object_uri, RDF.type, NS_ATTCK.AttackPattern))
                                 count += 1
-
     return count
 
 
 def _link_capec_to_attck_json(g: Graph, file_path: str, predicate: URIRef) -> int:
     count = 0
     data = _load_json_data(file_path)
-
     patterns = []
     if isinstance(data, dict):
         patterns = data.get("Attack_Patterns", data.get("attack_patterns", []))
     elif isinstance(data, list):
         patterns = data
-
     for pattern in patterns:
         capec_id = pattern.get("ID") or pattern.get("id")
         if not capec_id:
@@ -354,16 +311,13 @@ def _link_capec_to_attck_json(g: Graph, file_path: str, predicate: URIRef) -> in
             capec_id = attribs.get("ID")
         if not capec_id:
             continue
-
         subject_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
         g.add((subject_uri, RDF.type, NS_CAPEC.CAPEC))
-
         taxonomy_mappings = pattern.get("Taxonomy_Mappings", [])
         if isinstance(taxonomy_mappings, dict):
             taxonomy_mappings = taxonomy_mappings.get("Taxonomy_Mapping", [])
         if isinstance(taxonomy_mappings, dict):
             taxonomy_mappings = [taxonomy_mappings]
-
         for mapping in taxonomy_mappings:
             taxonomy_name = mapping.get("Taxonomy_Name", "")
             if "ATTACK" in taxonomy_name.upper():
@@ -373,9 +327,7 @@ def _link_capec_to_attck_json(g: Graph, file_path: str, predicate: URIRef) -> in
                         entry_id = "T" + entry_id
                     object_uri = URIRef(RESOURCE_BASE["attck"] + entry_id)
                     g.add((subject_uri, predicate, object_uri))
-                    g.add((object_uri, RDF.type, NS_ATTCK.AttackPattern))
                     count += 1
-
     return count
 
 
@@ -385,31 +337,24 @@ def _link_icsa_to_cve(g: Graph, subject_files: list[str], predicate: URIRef) -> 
         try:
             data = _load_json_data(file_path)
         except Exception as e:
-            print(f"  [EXECUTOR] Gagal membaca {file_path}: {e}")
+            print(f"[EXECUTOR] Failed to read {file_path}: {e}")
             continue
-
         vulnerabilities = []
         if isinstance(data, dict):
             vulnerabilities = data.get("vulnerabilities", [])
         elif isinstance(data, list):
             vulnerabilities = data
-
         for vuln in vulnerabilities:
             cve_id = vuln.get("cveID")
             if not cve_id:
                 continue
-
             cve_id = _sanitize_uri_component(cve_id)
             vendor = _sanitize_uri_component(vuln.get("vendorProject", "unknown"))
             product = _sanitize_uri_component(vuln.get("product", "unknown"))
             icsa_id = f"{vendor}_{product}_{cve_id}".replace(" ", "_")
-
             subject_uri = URIRef(RESOURCE_BASE["icsa"] + icsa_id)
             g.add((subject_uri, RDF.type, NS_ICSA.ICSA))
-
             object_uri = URIRef(RESOURCE_BASE["cve"] + cve_id)
             g.add((subject_uri, predicate, object_uri))
-            g.add((object_uri, RDF.type, NS_CVE.CVE))
             count += 1
-
     return count

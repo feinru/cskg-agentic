@@ -14,13 +14,10 @@ RUN apt-get update && \
     apt-get purge -y --auto-remove ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy requirement files first for better caching
+# Copy requirements and install dependencies
 COPY requirements.txt ./
-COPY modules/fetcher/requirements.txt ./fetcher_reqs.txt
-COPY modules/validation/requirements.txt ./validation_reqs.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install python dependencies
-RUN pip install --no-cache-dir -r requirements.txt -r fetcher_reqs.txt -r validation_reqs.txt
 
 # Copy the rest of the application
 COPY . .

@@ -1,37 +1,40 @@
 #!/bin/bash
-# The script is not intended to be run directly, use "docker compose up --build" instead
-
 set -e
 
+VIRTUOSO_HOST="${VIRTUOSO_HOST:-localhost}"
+
+if [ -f ".venv/bin/python" ] && [ -z "$PYTHON" ]; then
+  PYTHON=".venv/bin/python"
+else
+  PYTHON="${PYTHON:-python3}"
+fi
+
 echo "1. Running Fetcher Module..."
-python modules/fetcher/main.py
+$PYTHON modules/fetcher/main.py
 
 echo "2. Running Parser Module..."
-python modules/parser/main.py
+$PYTHON modules/parser/main.py
 
 echo "3. Running Linking Module..."
-python modules/linking/main.py
+$PYTHON modules/linking/main.py
 
 echo "4. Running Validation Module..."
-python modules/validation/main.py
+$PYTHON modules/validation/main.py
 
 echo "5. Copying TTL files to toload directory..."
 mkdir -p sparql/data
-# find all ttl files except those in venv or already in data, and copy them
-find . -name "*.ttl" -not -path "*/venv/*" -not -path "*/sparql/data/*" -exec cp {} sparql/data/ \;
+cp modules/parser/output/*.ttl sparql/data/
+cp modules/linking/output/*.ttl sparql/data/
 
 echo "6. Loading data into SPARQL Endpoint..."
-# Wait for Virtuoso to be ready by pinging port 8890
-echo "Waiting for Virtuoso to be ready on $VIRTUOSO_HOST:8890..."
-until curl -s http://$VIRTUOSO_HOST:8890 > /dev/null; do
-  echo "Virtuoso not ready yet, sleeping 5 seconds..."
-  sleep 5
-done
+if ! curl -s -f "http://${VIRTUOSO_HOST}:8890/sparql" > /dev/null; then
+  echo "Waiting for Virtuoso on ${VIRTUOSO_HOST}:8890..."
+  until curl -s -f "http://${VIRTUOSO_HOST}:8890/sparql" > /dev/null; do
+    sleep 2
+  done
+  sleep 3
+fi
 
-# Give Virtuoso a little extra time to fully initialize ISQL port 1111
-echo "Virtuoso HTTP is up. Waiting 10s for ISQL port to settle..."
-sleep 10
-
-python sparql/load.py
+$PYTHON sparql/load.py
 
 echo "CSKG Pipeline completed successfully!"
