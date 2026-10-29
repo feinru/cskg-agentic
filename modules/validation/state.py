@@ -6,4 +6,3 @@ class ValidationState(TypedDict, total=False):
     current_task: dict
     validation_results: list[dict]
     all_done: bool
-    summary: str

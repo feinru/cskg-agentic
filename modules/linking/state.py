@@ -6,4 +6,4 @@ class LinkingState(TypedDict, total=False):
     current_task: dict
     linked_results: list[dict]
     all_done: bool
-    summary: str
+

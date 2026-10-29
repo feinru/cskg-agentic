@@ -1,34 +1,35 @@
+from __future__ import annotations
+
 import xml.etree.ElementTree as ET
+from collections.abc import Iterator
+from typing import Any
+
 from .base import BaseParser
 
 
+def _strip_ns(tag: str) -> str:
+    if "}" in tag:
+        return tag.split("}", 1)[1]
+    return tag
+
+
 class XMLParser(BaseParser):
-    def parse(self) -> list[dict]:
-        tree = ET.parse(self.file_path)
-        root = tree.getroot()
+    def parse_iter(self) -> Iterator[dict[str, Any]]:
+        target_tag = "Weakness" if self.source_name == "cwe" else "Attack_Pattern"
+        context = ET.iterparse(str(self.file_path), events=("end",))
+        for _, elem in context:
+            if _strip_ns(elem.tag) == target_tag:
+                entity: dict[str, Any] = {
+                    "@xml_tag": target_tag,
+                    "attribs": dict(elem.attrib),
+                }
+                for child in elem:
+                    tag = _strip_ns(child.tag)
+                    if tag == "Description":
+                        entity["Description"] = child.text
+                yield entity
+                elem.clear()
 
-        def strip_ns(tag: str) -> str:
-            if "}" in tag:
-                return tag.split("}", 1)[1]
-            return tag
+    def parse(self) -> list[dict[str, Any]]:
+        return list(self.parse_iter())
 
-        entities = []
-        if self.source_name == "cwe":
-            for elem in root.iter():
-                if strip_ns(elem.tag) == "Weakness":
-                    entity = {"@xml_tag": "Weakness", "attribs": elem.attrib}
-                    for child in elem:
-                        tag = strip_ns(child.tag)
-                        if tag == "Description":
-                            entity["Description"] = child.text
-                    entities.append(entity)
-        elif self.source_name == "capec":
-            for elem in root.iter():
-                if strip_ns(elem.tag) == "Attack_Pattern":
-                    entity = {"@xml_tag": "Attack_Pattern", "attribs": elem.attrib}
-                    for child in elem:
-                        tag = strip_ns(child.tag)
-                        if tag == "Description":
-                            entity["Description"] = child.text
-                    entities.append(entity)
-        return entities

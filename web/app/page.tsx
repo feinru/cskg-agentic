@@ -124,7 +124,7 @@ function ChatApp() {
       const errorMsg = {
         id: uuidv4(),
         role: "agent" as const,
-        content: "Sorry, I encountered an error connecting to the API. Make sure the FastAPI server is running."
+        content: "Sorry, I encountered an error connecting to the API. Make sure the server and Virtuoso SPARQL endpoint are running."
       };
       setMessages([...newMessages, errorMsg]);
     } finally {

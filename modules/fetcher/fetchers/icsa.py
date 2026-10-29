@@ -1,5 +1,7 @@
 import requests
+
 from modules.config import ICSA_FEED_URL
+
 from .base import BaseFetcher
 
 
@@ -12,7 +14,7 @@ class ICSAFetcher(BaseFetcher):
         try:
             resp = requests.get(self.feed_url, timeout=15)
             return resp.json().get("dateReleased")
-        except Exception as e:
+        except (requests.RequestException, OSError, ValueError, KeyError) as e:
             print(f"[icsa] Failed to check remote version: {e}")
         return None
 

@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
+
 from modules.config import CACHE_DIR, LINKING_RULES, PARSER_OUTPUT_DIR
+
 from ..state import LinkingState
 
 
 def planner(state: LinkingState) -> LinkingState:
-    print("[Linking] Analyzing parser outputs for linking plan...")
+    print("\n[Linking] Analyzing parser outputs for linking plan...")
     parser_output_dir = PARSER_OUTPUT_DIR
     fetcher_cache_dir = CACHE_DIR
     available_sources = set()
@@ -14,7 +16,6 @@ def planner(state: LinkingState) -> LinkingState:
             if ttl_file.is_file() and ttl_file.suffix.lower() == ".ttl":
                 source_name = ttl_file.stem.lower()
                 available_sources.add(source_name)
-                print(f"[Linking] Found parser output: {source_name} ({ttl_file.name})")
     else:
         print("[Linking] WARNING: modules/parser/output directory not found.")
     if not available_sources and fetcher_cache_dir.exists():
@@ -23,17 +24,16 @@ def planner(state: LinkingState) -> LinkingState:
             if cache_file.is_file():
                 source_name = cache_file.stem.lower()
                 available_sources.add(source_name)
-                print(f"[Linking] Found cache: {source_name} ({cache_file.name})")
     print(f"[Linking] Available data sources: {sorted(available_sources)}")
     link_plan = []
     for rule in LINKING_RULES:
         subject_src = rule["subject_src"]
         object_src = rule["object_src"]
         subject_available = any(
-            (s == subject_src or s.startswith(subject_src) for s in available_sources)
+            s == subject_src or s.startswith(subject_src) for s in available_sources
         )
         object_available = any(
-            (s == object_src or s.startswith(object_src) for s in available_sources)
+            s == object_src or s.startswith(object_src) for s in available_sources
         )
         if subject_available and object_available:
             subject_files = _find_data_files(fetcher_cache_dir, subject_src)
@@ -61,21 +61,21 @@ def planner(state: LinkingState) -> LinkingState:
     if not link_plan:
         print("[Linking] No linking tasks planned.")
     current_task = link_plan.pop(0) if link_plan else {}
-    return {"link_plan": link_plan, "current_task": current_task, "summary": ""}
+    return {"link_plan": link_plan, "current_task": current_task}
 
 
 def _find_data_files(cache_dir: Path, source_prefix: str) -> list[str]:
     files = []
     if not cache_dir.exists():
         return files
-    for f in cache_dir.iterdir():
-        if not f.is_file():
+    seen = set()
+    for f in sorted(cache_dir.iterdir()):
+        if not f.is_file() or f.suffix.lower() != ".json":
             continue
         stem = f.stem.lower()
-        if stem == source_prefix or stem.startswith(source_prefix):
-            if f.suffix.lower() not in (".json", ".xml"):
-                continue
-            if f.suffix.lower() == ".json":
+        if stem == source_prefix or stem.startswith(f"{source_prefix}_"):
+            actual = str(f)
+            if f.stat().st_size < 100 * 1024:
                 try:
                     with open(f, "r", encoding="utf-8") as fp:
                         data = json.load(fp)
@@ -83,23 +83,21 @@ def _find_data_files(cache_dir: Path, source_prefix: str) -> list[str]:
                         isinstance(data, list)
                         and len(data) == 1
                         and isinstance(data[0], dict)
-                        and ("file" in data[0])
+                        and "file" in data[0]
                     ):
                         pointer_file = data[0]["file"]
                         if pointer_file.startswith("cache/"):
                             actual = str(cache_dir.parent / pointer_file)
                         else:
                             actual = str(cache_dir / Path(pointer_file).name)
-                        resolved = Path(actual).resolve()
-                        safe_base = cache_dir.parent.resolve()
-                        if not str(resolved).startswith(str(safe_base)):
-                            print(
-                                f"[Linking] WARNING: Path traversal detected, skipping pointer: {pointer_file}"
-                            )
-                            continue
-                        files.append(actual)
-                        continue
-                except (json.JSONDecodeError, IOError):
+                except (OSError, json.JSONDecodeError):
                     pass
-            files.append(str(f))
+            resolved = Path(actual).resolve()
+            safe_base = cache_dir.parent.resolve()
+            if not str(resolved).startswith(str(safe_base)):
+                continue
+            if actual not in seen:
+                seen.add(actual)
+                files.append(actual)
+            continue
     return files

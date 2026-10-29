@@ -10,3 +10,6 @@ class BaseParser(ABC):
     @abstractmethod
     def parse(self) -> list[dict]:
         pass
+
+    def parse_iter(self):
+        yield from self.parse()

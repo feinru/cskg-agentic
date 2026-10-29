@@ -1,4 +1,5 @@
 from state import FetcherState
+
 from modules.config import FETCHER_REGISTRY
 
 

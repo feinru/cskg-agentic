@@ -9,26 +9,25 @@ else
   PYTHON="${PYTHON:-python3}"
 fi
 
-echo "1. Running Fetcher Module..."
 $PYTHON modules/fetcher/main.py
-
-echo "2. Running Parser Module..."
 $PYTHON modules/parser/main.py
-
-echo "3. Running Linking Module..."
 $PYTHON modules/linking/main.py
-
-echo "4. Running Validation Module..."
 $PYTHON modules/validation/main.py
 
-echo "5. Copying TTL files to toload directory..."
 mkdir -p sparql/data
 cp modules/parser/output/*.ttl sparql/data/
-cp modules/linking/output/*.ttl sparql/data/
+for f in modules/linking/output/*.ttl; do
+  [ -e "$f" ] || continue
+  filename=$(basename "$f")
+  case "$filename" in
+    *_to_*|*_simulated*) ;;
+    *) cp "$f" sparql/data/ ;;
+  esac
+done
 
-echo "6. Loading data into SPARQL Endpoint..."
 if ! curl -s -f "http://${VIRTUOSO_HOST}:8890/sparql" > /dev/null; then
-  echo "Waiting for Virtuoso on ${VIRTUOSO_HOST}:8890..."
+  echo ""
+  echo "[SPARQL] Waiting for Virtuoso on ${VIRTUOSO_HOST}:8890..."
   until curl -s -f "http://${VIRTUOSO_HOST}:8890/sparql" > /dev/null; do
     sleep 2
   done
@@ -37,4 +36,6 @@ fi
 
 $PYTHON sparql/load.py
 
-echo "CSKG Pipeline completed successfully!"
+echo ""
+echo "Done successfully!"
+

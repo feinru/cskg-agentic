@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 from pathlib import Path
 
 if __name__ == "__main__" and __package__ is None:
@@ -15,14 +15,12 @@ else:
 
 
 def run_linking():
-    print("[Linking] Cybersecurity KG Entity Linking Pipeline\n")
     result = graph.invoke(
         {
             "link_plan": [],
             "current_task": {},
             "linked_results": [],
             "all_done": False,
-            "summary": "",
         }
     )
     print("\n[Linking] Final Results")
@@ -31,20 +29,18 @@ def run_linking():
     failed = [r for r in linked_results if r.get("status") != "success"]
     for r in linked_results:
         icon = "[OK]" if r.get("status") == "success" else "[FAIL]"
-        print(f"\n{icon} {r['link_type'].upper()}")
+        print(f"{icon} {r['link_type'].upper()}")
         print(f"   Predicate : {r.get('predicate', '-')}")
         print(f"   Status    : {r['status']}")
-        print(f"   Triples   : {r.get('triples_count', 0)}")
+        print(f"   Triples   : {r.get('triples_count', 0):,}")
         if r.get("output_file"):
             print(f"   Output    : {r['output_file']}")
         if r.get("error"):
             print(f"   Error     : {r['error']}")
-    print(f"\nSuccessful : {len(success)} linking tasks")
+    print(f"Successful : {len(success)} linking tasks")
     print(f"Failed     : {len(failed)} linking tasks")
-    total_triples = sum((r.get("triples_count", 0) for r in linked_results))
+    total_triples = sum(r.get("triples_count", 0) for r in linked_results)
     print(f"Total Triples : {total_triples:,}")
-    if result.get("summary"):
-        print(f"Summary       : {result['summary']}")
 
 
 if __name__ == "__main__":

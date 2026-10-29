@@ -22,6 +22,28 @@ class OntologyMapper:
                 if desc.get("lang") == "en":
                     mapped["sepses:description"] = desc.get("value")
                     break
+            if cve_data.get("published"):
+                mapped["sepses:published"] = cve_data.get("published")
+            if cve_data.get("lastModified"):
+                mapped["sepses:lastModified"] = cve_data.get("lastModified")
+            metrics = cve_data.get("metrics", {})
+            cvss_list = (
+                metrics.get("cvssMetricV31")
+                or metrics.get("cvssMetricV30")
+                or metrics.get("cvssMetricV2")
+                or []
+            )
+            if cvss_list and isinstance(cvss_list, list):
+                first_metric = cvss_list[0]
+                cvss_data = first_metric.get("cvssData", {})
+                if "baseScore" in cvss_data:
+                    mapped["sepses:baseScore"] = cvss_data["baseScore"]
+                if "baseSeverity" in cvss_data:
+                    mapped["sepses:severity"] = cvss_data["baseSeverity"]
+                elif "baseSeverity" in first_metric:
+                    mapped["sepses:severity"] = first_metric["baseSeverity"]
+                if "vectorString" in cvss_data:
+                    mapped["sepses:vectorString"] = cvss_data["vectorString"]
             weaknesses = cve_data.get("weaknesses", [])
             cwe_refs = []
             for w in weaknesses:
@@ -46,6 +68,14 @@ class OntologyMapper:
             if cpe_name:
                 cpe_safe = cpe_name.replace(":", "").replace("/", "")
                 mapped["__uri_key__"] = _sanitize_uri_component(cpe_safe)
+                parts = cpe_name.split(":")
+                if len(parts) >= 6:
+                    if parts[3] and parts[3] != "*":
+                        mapped["sepses:vendor"] = parts[3]
+                    if parts[4] and parts[4] != "*":
+                        mapped["sepses:product"] = parts[4]
+                    if parts[5] and parts[5] != "*":
+                        mapped["sepses:version"] = parts[5]
         elif source_name == "capec":
             mapped["@type"] = "sepses:CAPEC"
             attribs = raw_entity.get("attribs", {})
@@ -78,8 +108,31 @@ class OntologyMapper:
                         mapped["sepses:techniqueId"] = ext_ref.get("external_id")
                         mapped["__uri_key__"] = ext_ref.get("external_id")
                         break
+                phases = raw_entity.get("kill_chain_phases", [])
+                if phases:
+                    tactics = [
+                        p.get("phase_name")
+                        for p in phases
+                        if p.get("kill_chain_name") == "mitre-attack"
+                        and p.get("phase_name")
+                    ]
+                    if tactics:
+                        mapped["sepses:tactic"] = tactics
+                if "x_mitre_is_subtechnique" in raw_entity:
+                    mapped["sepses:isSubtechnique"] = raw_entity[
+                        "x_mitre_is_subtechnique"
+                    ]
             else:
                 return {}
+        elif source_name == "epss":
+            mapped["@type"] = "sepses:EPSS"
+            cve_id = raw_entity.get("cve")
+            mapped["sepses:id"] = cve_id
+            mapped["sepses:cveID"] = cve_id
+            mapped["sepses:epssScore"] = raw_entity.get("epss")
+            if raw_entity.get("percentile"):
+                mapped["sepses:epssPercentile"] = raw_entity.get("percentile")
+            mapped["__uri_key__"] = _sanitize_uri_component(cve_id)
         else:
             mapped["@type"] = "sepses:Unknown"
             mapped["raw_data"] = raw_entity

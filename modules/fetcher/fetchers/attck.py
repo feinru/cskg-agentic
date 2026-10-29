@@ -1,6 +1,8 @@
+
 import requests
-import json
+
 from modules.config import ATTCK_DIRECT_URLS, ATTCK_VERSION_URLS, CACHE_DIR
+
 from .base import BaseFetcher
 
 
@@ -17,7 +19,7 @@ class ATTCKFetcher(BaseFetcher):
             commits = resp.json()
             if isinstance(commits, list) and commits:
                 return commits[0]["sha"][:7]
-        except Exception as e:
+        except (requests.RequestException, OSError, KeyError, ValueError) as e:
             print(f"[{self.source_name}] Failed to check version: {e}")
         return None
 
@@ -28,19 +30,15 @@ class ATTCKFetcher(BaseFetcher):
         resp.raise_for_status()
         file_path = CACHE_DIR / f"{self.source_name}.json"
         with open(file_path, "wb") as f:
-            for chunk in resp.iter_content(8192):
-                f.write(chunk)
+            f.writelines(resp.iter_content(8192))
         print(f"[{self.source_name}] Saved: {file_path}")
         return [{"source": self.source_name, "file": str(file_path)}]
 
     def run(self) -> dict:
-        print(f"\n[{self.source_name.upper()}] Starting...")
+        file_path = CACHE_DIR / f"{self.source_name}.json"
         if not self.needs_update():
             print(f"[{self.source_name}] Already up-to-date, using cache.")
-            file_path = CACHE_DIR / f"{self.source_name}.json"
-            with open(file_path) as f:
-                raw = json.load(f)
-            records = len(raw.get("objects", [])) if isinstance(raw, dict) else 0
+            records = self.count_cached_records()
             return {
                 "source": self.source_name,
                 "status": "cached",
@@ -50,12 +48,7 @@ class ATTCKFetcher(BaseFetcher):
             }
         try:
             self.fetch()
-            file_path = CACHE_DIR / f"{self.source_name}.json"
-            with open(file_path) as f:
-                raw = json.load(f)
-            records = len(
-                [o for o in raw.get("objects", []) if o.get("type") == "attack-pattern"]
-            )
+            records = self.count_cached_records()
             version = self.get_remote_version()
             if version:
                 self.save_local_version(version)
@@ -66,7 +59,7 @@ class ATTCKFetcher(BaseFetcher):
                 "file_path": str(file_path),
                 "error": None,
             }
-        except Exception as e:
+        except (requests.RequestException, OSError, KeyError, ValueError) as e:
             return {
                 "source": self.source_name,
                 "status": "failed",

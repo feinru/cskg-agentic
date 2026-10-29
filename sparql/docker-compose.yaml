@@ -9,6 +9,6 @@ services:
       - '8890:8890' # SPARQL Endpoint HTTP / Conductor Web UI
       - '1111:1111' # ISQL connection port
     volumes:
-      - ./data:/database/data
-      - ./toload:/opt/virtuoso-opensource/vsp/toload
+      - ./db:/database
+      - ./data:/opt/virtuoso-opensource/vsp/toload
     restart: unless-stopped

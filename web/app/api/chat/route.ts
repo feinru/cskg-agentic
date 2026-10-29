@@ -10,14 +10,18 @@ const SPARQL_ENDPOINT = process.env.SPARQL_ENDPOINT || "http://localhost:8890/sp
 const executeSparqlQuery = tool(
   async ({ query }) => {
     try {
+      let safeQuery = query.trim();
+      if (!/limit\s+\d+/i.test(safeQuery)) {
+        safeQuery += " LIMIT 50";
+      }
+
       const response = await fetch(
-        `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=application%2Fsparql-results%2Bjson`,
+        `${SPARQL_ENDPOINT}?query=${encodeURIComponent(safeQuery)}&format=application%2Fsparql-results%2Bjson`,
         {
           method: "GET",
           headers: {
             Accept: "application/sparql-results+json",
           },
-          // Add a small timeout in a real app, native fetch doesn't have an easy timeout config without AbortController
         }
       );
 
@@ -28,8 +32,9 @@ const executeSparqlQuery = tool(
       const data = await response.json();
       const bindings = data?.results?.bindings || [];
 
-      // Clean up bindings to a simpler JSON list of dicts for the LLM
-      const cleanedResults = bindings.map((row: Record<string, { value: string }>) => {
+      const maxRows = 50;
+      const sliced = bindings.slice(0, maxRows);
+      const cleanedResults = sliced.map((row: Record<string, { value: string }>) => {
         const cleanedRow: Record<string, string> = {};
         for (const [k, v] of Object.entries(row)) {
           cleanedRow[k] = v.value;
@@ -37,7 +42,11 @@ const executeSparqlQuery = tool(
         return cleanedRow;
       });
 
-      return JSON.stringify(cleanedResults, null, 2);
+      let jsonOutput = JSON.stringify(cleanedResults, null, 2);
+      if (bindings.length > maxRows) {
+        jsonOutput += `\n\n[Notice: Results truncated to first ${maxRows} records out of ${bindings.length} total rows]`;
+      }
+      return jsonOutput;
     } catch (e: unknown) {
       return `Error executing SPARQL query: ${(e as Error).message}`;
     }
@@ -59,43 +68,64 @@ ALWAYS write and execute a SPARQL query before answering.
 
 Here is the ontology schema you MUST use for your SPARQL queries:
 - Prefixes:
-  PREFIX cve:   <http://w3id.org/sepses/vocab/ref/cve#>
-  PREFIX cpe:   <http://w3id.org/sepses/vocab/ref/cpe#>
-  PREFIX cwe:   <http://w3id.org/sepses/vocab/ref/cwe#>
-  PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
-  PREFIX attck: <http://w3id.org/sepses/vocab/ref/attack#>
-  PREFIX icsa:  <http://w3id.org/sepses/vocab/ref/icsa#>
+  PREFIX cve:    <http://w3id.org/sepses/vocab/ref/cve#>
+  PREFIX cpe:    <http://w3id.org/sepses/vocab/ref/cpe#>
+  PREFIX cwe:    <http://w3id.org/sepses/vocab/ref/cwe#>
+  PREFIX capec:  <http://w3id.org/sepses/vocab/ref/capec#>
+  PREFIX attck:  <http://w3id.org/sepses/vocab/ref/attack#>
+  PREFIX icsa:   <http://w3id.org/sepses/vocab/ref/icsa#>
+  PREFIX epss:   <http://w3id.org/sepses/vocab/ref/epss#>
+  PREFIX d3fend: <http://d3fend.mitre.org/ontologies/d3fend.owl#>
+  PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 
 - Available Graphs and Relations:
   1. GRAPH <http://w3id.org/sepses/graph/cve>
      - ?cve cve:id ?cveId .
      - ?cve cve:description ?cveDesc .
-  2. GRAPH <http://w3id.org/sepses/graph/cve2cwe> (or <http://w3id.org/sepses/graph/cve_to_cwe>)
+     - ?cve cve:baseScore ?score .
+     - ?cve cve:severity ?severity .
+     - ?cve cve:published ?pubDate .
+  2. GRAPH <http://w3id.org/sepses/graph/cve2cwe>
      - ?cve cve:hasCWE ?cweNode .
-  3. GRAPH <http://w3id.org/sepses/graph/cve2cpe> (or <http://w3id.org/sepses/graph/cve_to_cpe>)
+  3. GRAPH <http://w3id.org/sepses/graph/cve2cpe>
      - ?cve cve:hasCPE ?cpeNode .
   4. GRAPH <http://w3id.org/sepses/graph/cpe>
      - ?cpeNode cpe:cpe23Uri ?cpeUri .
-     - ?cpeNode cpe:id ?cpeNameId .
+     - ?cpeNode cpe:vendor ?vendor .
+     - ?cpeNode cpe:product ?product .
+     - ?cpeNode cpe:version ?version .
   5. GRAPH <http://w3id.org/sepses/graph/cwe>
      - ?cweNode cwe:name ?cweName .
      - ?cweNode cwe:description ?cweDesc .
-  6. GRAPH <http://w3id.org/sepses/graph/cwe2capec> (or <http://w3id.org/sepses/graph/cwe_to_capec>)
+  6. GRAPH <http://w3id.org/sepses/graph/cwe2capec>
      - ?cweNode cwe:hasCAPEC ?capecNode .
-  7. GRAPH <http://w3id.org/sepses/graph/capec2attck> (or <http://w3id.org/sepses/graph/capec_to_attck>)
+  7. GRAPH <http://w3id.org/sepses/graph/capec2attck>
      - ?capecNode capec:hasRelatedAttackPattern ?attckNode .
-  8. GRAPH <http://w3id.org/sepses/graph/attck_enterprise> & GRAPH <http://w3id.org/sepses/graph/attck_ics>
+  8. GRAPH <http://w3id.org/sepses/graph/attck_enterprise>, GRAPH <http://w3id.org/sepses/graph/attck_ics>, & GRAPH <http://w3id.org/sepses/graph/attck_mobile>
      - ?attckNode attck:techniqueId ?techniqueId .
      - ?attckNode attck:name ?techniqueName .
      - ?attckNode attck:description ?techniqueDesc .
+     - ?attckNode attck:tactic ?tactic .
   9. GRAPH <http://w3id.org/sepses/graph/icsa> (CISA Known Exploited Vulnerabilities)
      - ?icsaNode a icsa:ICSA .
      - ?icsaNode icsa:cveID ?cveId .
      - ?icsaNode icsa:vendorProject ?vendor .
      - ?icsaNode icsa:product ?product .
      - ?icsaNode icsa:vulnerabilityName ?vulnName .
-  10. GRAPH <http://w3id.org/sepses/graph/icsa2cve> (or <http://w3id.org/sepses/graph/icsa_to_cve>)
+  10. GRAPH <http://w3id.org/sepses/graph/icsa2cve>
      - ?icsaNode icsa:hasCVE ?cve .
+  11. GRAPH <http://w3id.org/sepses/graph/epss> (FIRST.org Exploit Prediction Scoring System)
+     - ?epssNode a epss:EPSS .
+     - ?epssNode epss:cveID ?cveId .
+     - ?epssNode epss:epssScore ?epssScore .
+     - ?epssNode epss:epssPercentile ?epssPercentile .
+  12. GRAPH <http://w3id.org/sepses/graph/cve2epss>
+     - ?cve cve:hasEPSS ?epssNode .
+  13. GRAPH <http://w3id.org/sepses/graph/d3fend> (MITRE D3FEND Defensive Measures)
+     - ?defTech a d3fend:DefensiveTechnique .
+     - ?defTech rdfs:label ?defTechLabel .
+  14. GRAPH <http://w3id.org/sepses/graph/d3fend2attck> (D3FEND Countermeasures against ATT&CK)
+     - ?defTech d3fend:counters ?attckNode .
 
 When the user asks a question:
 1. Write the appropriate SPARQL query string based on the user's intent. 

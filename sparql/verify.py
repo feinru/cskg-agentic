@@ -1,13 +1,14 @@
-import os
 import sys
 from pathlib import Path
+
 import requests
 
 parent_dir = Path(__file__).resolve().parent.parent
 if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
-from modules.config import VIRTUOSO_HOST, VIRTUOSO_SPARQL as SPARQL_ENDPOINT
+from modules.config import VIRTUOSO_HOST
+from modules.config import VIRTUOSO_SPARQL as SPARQL_ENDPOINT
 
 
 def query(sparql: str, description: str) -> bool:
@@ -45,12 +46,28 @@ def main():
             "Sample CWE entries",
         ),
         (
-            "SELECT ?capec ?attck WHERE {\n               VALUES ?g { <http://w3id.org/sepses/graph/capec2attck> <http://w3id.org/sepses/graph/capec_to_attck> }\n               GRAPH ?g {\n                 ?capec <http://w3id.org/sepses/vocab/ref/capec#hasRelatedAttackPattern> ?attck .\n               }\n             } LIMIT 3",
+            "SELECT ?capec ?attck WHERE {\n               GRAPH <http://w3id.org/sepses/graph/capec2attck> {\n                 ?capec <http://w3id.org/sepses/vocab/ref/capec#hasRelatedAttackPattern> ?attck .\n               }\n             } LIMIT 3",
             "Sample CAPEC to ATT&CK links",
         ),
         (
-            "SELECT ?icsa ?cve WHERE {\n               VALUES ?g { <http://w3id.org/sepses/graph/icsa2cve> <http://w3id.org/sepses/graph/icsa_to_cve> }\n               GRAPH ?g {\n                 ?icsa <http://w3id.org/sepses/vocab/ref/icsa#hasCVE> ?cve .\n               }\n             } LIMIT 3",
+            "SELECT ?icsa ?cve WHERE {\n               GRAPH <http://w3id.org/sepses/graph/icsa2cve> {\n                 ?icsa <http://w3id.org/sepses/vocab/ref/icsa#hasCVE> ?cve .\n               }\n             } LIMIT 3",
             "Sample ICSA to CVE links",
+        ),
+        (
+            "SELECT ?tech ?name WHERE {\n               GRAPH <http://w3id.org/sepses/graph/attck_mobile> {\n                 ?tech <http://w3id.org/sepses/vocab/ref/attack#techniqueId> ?name .\n               }\n             } LIMIT 3",
+            "Sample ATT&CK Mobile techniques",
+        ),
+        (
+            "SELECT ?epss ?score WHERE {\n               GRAPH <http://w3id.org/sepses/graph/epss> {\n                 ?epss <http://w3id.org/sepses/vocab/ref/epss#epssScore> ?score .\n               }\n             } LIMIT 3",
+            "Sample EPSS predictions",
+        ),
+        (
+            "SELECT ?cve ?epss WHERE {\n               GRAPH <http://w3id.org/sepses/graph/cve2epss> {\n                 ?cve <http://w3id.org/sepses/vocab/ref/cve#hasEPSS> ?epss .\n               }\n             } LIMIT 3",
+            "Sample CVE to EPSS links",
+        ),
+        (
+            "SELECT ?defTech ?attck WHERE {\n               GRAPH <http://w3id.org/sepses/graph/d3fend2attck> {\n                 ?defTech <http://d3fend.mitre.org/ontologies/d3fend.owl#counters> ?attck .\n               }\n             } LIMIT 3",
+            "Sample D3FEND countermeasures to ATT&CK techniques",
         ),
     ]
     passed = 0
@@ -59,7 +76,7 @@ def main():
             passed += 1
     print(f"\nTests passed: {passed}/{len(tests)}")
     print(f"Endpoint URL : {SPARQL_ENDPOINT}")
-    print(f"Web UI       : http://localhost:8890/conductor\n")
+    print(f"Web UI       : http://{VIRTUOSO_HOST}:8890/conductor\n")
 
 
 if __name__ == "__main__":

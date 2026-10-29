@@ -1,14 +1,16 @@
-import requests
-import zipfile
 import re
-from pathlib import Path
+import zipfile
+
+import requests
+
 from modules.config import (
-    CWE_DOWNLOAD_PAGE,
-    CWE_URL,
+    CACHE_DIR,
     CAPEC_DOWNLOAD_PAGE,
     CAPEC_URL,
-    CACHE_DIR,
+    CWE_DOWNLOAD_PAGE,
+    CWE_URL,
 )
+
 from .base import BaseFetcher
 
 
@@ -24,7 +26,7 @@ class CWEFetcher(BaseFetcher):
             match = re.search("CWE List Version ([\\d.]+)", resp.text)
             if match:
                 return match.group(1)
-        except Exception as e:
+        except (requests.RequestException, OSError, ValueError) as e:
             print(f"[cwe] Failed to check remote version: {e}")
         return None
 
@@ -34,8 +36,7 @@ class CWEFetcher(BaseFetcher):
         resp = requests.get(self.base_url, stream=True, timeout=60)
         resp.raise_for_status()
         with open(zip_path, "wb") as f:
-            for chunk in resp.iter_content(8192):
-                f.write(chunk)
+            f.writelines(resp.iter_content(8192))
         with zipfile.ZipFile(zip_path, "r") as z:
             xml_files = [n for n in z.namelist() if n.endswith(".xml")]
             if not xml_files:
@@ -59,7 +60,7 @@ class CAPECFetcher(BaseFetcher):
             match = re.search("CAPEC List Version ([\\d.]+)", resp.text)
             if match:
                 return match.group(1)
-        except Exception as e:
+        except (requests.RequestException, OSError, ValueError) as e:
             print(f"[capec] Failed to check remote version: {e}")
         return None
 
@@ -69,7 +70,6 @@ class CAPECFetcher(BaseFetcher):
         resp = requests.get(self.base_url, stream=True, timeout=60)
         resp.raise_for_status()
         with open(xml_path, "wb") as f:
-            for chunk in resp.iter_content(8192):
-                f.write(chunk)
+            f.writelines(resp.iter_content(8192))
         print(f"[capec] XML file saved: {xml_path}")
         return [{"source": "capec", "file": str(xml_path)}]
