@@ -33,13 +33,8 @@ export default function Sidebar() {
       }
     };
 
-    // Load initially
     loadHistory();
-
-    // Listen for storage changes from other tabs/actions
     window.addEventListener("storage", loadHistory);
-
-    // Custom event for same-tab updates
     window.addEventListener("historyUpdated", loadHistory);
 
     return () => {
@@ -54,7 +49,7 @@ export default function Sidebar() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className={styles.sidebarTitle} style={{ justifyContent: 'space-between' }}>
             <span>Chat CSKG</span>
-            <button 
+            <button
               onClick={() => setIsCollapsed(true)}
               className={styles.collapseButton}
               title="Collapse Sidebar"
@@ -65,6 +60,9 @@ export default function Sidebar() {
           <nav>
             <Link href="/" className={styles.navLink}>
               [New Chat]
+            </Link>
+            <Link href="/query" className={styles.navLink}>
+              [SPARQL Query]
             </Link>
             <Link href="/history" className={styles.navLink}>
               [History]
@@ -78,7 +76,7 @@ export default function Sidebar() {
               ))}
             </div>
           </nav>
-          
+
           <div className={styles.sidebarLicense} style={{ marginTop: 'auto' }}>
             <p>Fein - GNU AGPLv3 © {new Date().getFullYear()}</p>
           </div>
@@ -86,7 +84,7 @@ export default function Sidebar() {
       )}
 
       {isCollapsed && (
-        <button 
+        <button
           onClick={() => setIsCollapsed(false)}
           className={styles.collapseButtonCollapsed}
           title="Expand Sidebar"

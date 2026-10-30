@@ -1,139 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-
-const SPARQL_ENDPOINT = process.env.SPARQL_ENDPOINT || "http://localhost:8890/sparql";
-
-const executeSparqlQuery = tool(
-  async ({ query }) => {
-    try {
-      let safeQuery = query.trim();
-      if (!/limit\s+\d+/i.test(safeQuery)) {
-        safeQuery += " LIMIT 50";
-      }
-
-      const response = await fetch(
-        `${SPARQL_ENDPOINT}?query=${encodeURIComponent(safeQuery)}&format=application%2Fsparql-results%2Bjson`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/sparql-results+json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const bindings = data?.results?.bindings || [];
-
-      const maxRows = 50;
-      const sliced = bindings.slice(0, maxRows);
-      const cleanedResults = sliced.map((row: Record<string, { value: string }>) => {
-        const cleanedRow: Record<string, string> = {};
-        for (const [k, v] of Object.entries(row)) {
-          cleanedRow[k] = v.value;
-        }
-        return cleanedRow;
-      });
-
-      let jsonOutput = JSON.stringify(cleanedResults, null, 2);
-      if (bindings.length > maxRows) {
-        jsonOutput += `\n\n[Notice: Results truncated to first ${maxRows} records out of ${bindings.length} total rows]`;
-      }
-      return jsonOutput;
-    } catch (e: unknown) {
-      return `Error executing SPARQL query: ${(e as Error).message}`;
-    }
-  },
-  {
-    name: "execute_sparql_query",
-    description: "Execute a SPARQL query against the Cybersecurity Knowledge Graph (CSKG) and return the results as a JSON string. Use this to fetch data to answer the user's question.",
-    schema: z.object({
-      query: z.string().describe("The exact SPARQL query to execute"),
-    }),
-  }
-);
-
-const SYSTEM_PROMPT = `You are a Senior SOC Analyst and Knowledge Graph Expert.
-Your job is to answer security questions by querying a Cybersecurity Knowledge Graph (CSKG) via SPARQL.
-
-You have access to the \`execute_sparql_query\` tool. 
-ALWAYS write and execute a SPARQL query before answering.
-
-Here is the ontology schema you MUST use for your SPARQL queries:
-- Prefixes:
-  PREFIX cve:    <http://w3id.org/sepses/vocab/ref/cve#>
-  PREFIX cpe:    <http://w3id.org/sepses/vocab/ref/cpe#>
-  PREFIX cwe:    <http://w3id.org/sepses/vocab/ref/cwe#>
-  PREFIX capec:  <http://w3id.org/sepses/vocab/ref/capec#>
-  PREFIX attck:  <http://w3id.org/sepses/vocab/ref/attack#>
-  PREFIX icsa:   <http://w3id.org/sepses/vocab/ref/icsa#>
-  PREFIX epss:   <http://w3id.org/sepses/vocab/ref/epss#>
-  PREFIX d3fend: <http://d3fend.mitre.org/ontologies/d3fend.owl#>
-  PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-
-- Available Graphs and Relations:
-  1. GRAPH <http://w3id.org/sepses/graph/cve>
-     - ?cve cve:id ?cveId .
-     - ?cve cve:description ?cveDesc .
-     - ?cve cve:baseScore ?score .
-     - ?cve cve:severity ?severity .
-     - ?cve cve:published ?pubDate .
-  2. GRAPH <http://w3id.org/sepses/graph/cve2cwe>
-     - ?cve cve:hasCWE ?cweNode .
-  3. GRAPH <http://w3id.org/sepses/graph/cve2cpe>
-     - ?cve cve:hasCPE ?cpeNode .
-  4. GRAPH <http://w3id.org/sepses/graph/cpe>
-     - ?cpeNode cpe:cpe23Uri ?cpeUri .
-     - ?cpeNode cpe:vendor ?vendor .
-     - ?cpeNode cpe:product ?product .
-     - ?cpeNode cpe:version ?version .
-  5. GRAPH <http://w3id.org/sepses/graph/cwe>
-     - ?cweNode cwe:name ?cweName .
-     - ?cweNode cwe:description ?cweDesc .
-  6. GRAPH <http://w3id.org/sepses/graph/cwe2capec>
-     - ?cweNode cwe:hasCAPEC ?capecNode .
-  7. GRAPH <http://w3id.org/sepses/graph/capec2attck>
-     - ?capecNode capec:hasRelatedAttackPattern ?attckNode .
-  8. GRAPH <http://w3id.org/sepses/graph/attck_enterprise>, GRAPH <http://w3id.org/sepses/graph/attck_ics>, & GRAPH <http://w3id.org/sepses/graph/attck_mobile>
-     - ?attckNode attck:techniqueId ?techniqueId .
-     - ?attckNode attck:name ?techniqueName .
-     - ?attckNode attck:description ?techniqueDesc .
-     - ?attckNode attck:tactic ?tactic .
-  9. GRAPH <http://w3id.org/sepses/graph/icsa> (CISA Known Exploited Vulnerabilities)
-     - ?icsaNode a icsa:ICSA .
-     - ?icsaNode icsa:cveID ?cveId .
-     - ?icsaNode icsa:vendorProject ?vendor .
-     - ?icsaNode icsa:product ?product .
-     - ?icsaNode icsa:vulnerabilityName ?vulnName .
-  10. GRAPH <http://w3id.org/sepses/graph/icsa2cve>
-     - ?icsaNode icsa:hasCVE ?cve .
-  11. GRAPH <http://w3id.org/sepses/graph/epss> (FIRST.org Exploit Prediction Scoring System)
-     - ?epssNode a epss:EPSS .
-     - ?epssNode epss:cveID ?cveId .
-     - ?epssNode epss:epssScore ?epssScore .
-     - ?epssNode epss:epssPercentile ?epssPercentile .
-  12. GRAPH <http://w3id.org/sepses/graph/cve2epss>
-     - ?cve cve:hasEPSS ?epssNode .
-  13. GRAPH <http://w3id.org/sepses/graph/d3fend> (MITRE D3FEND Defensive Measures)
-     - ?defTech a d3fend:DefensiveTechnique .
-     - ?defTech rdfs:label ?defTechLabel .
-  14. GRAPH <http://w3id.org/sepses/graph/d3fend2attck> (D3FEND Countermeasures against ATT&CK)
-     - ?defTech d3fend:counters ?attckNode .
-
-When the user asks a question:
-1. Write the appropriate SPARQL query string based on the user's intent. 
-   - IMPORTANT: If the user mentions a specific product, vendor, or attack technique (e.g., "Apache", "SQL Injection"), you MUST use \`FILTER(regex(?variable, "keyword", "i"))\` to search for it (e.g., \`FILTER(regex(?product, "apache", "i"))\` or \`FILTER(regex(?capecName, "injection", "i"))\`). Do NOT write generic queries without filters unless asked.
-2. Show the SPARQL query you will execute.
-3. Use the \`execute_sparql_query\` tool to execute it.
-4. Read the JSON results.
-5. In your FINAL response, ALWAYS start by printing the exact SPARQL query you used inside a markdown code block, then provide a clear, detailed security explanation based on the returned data. Explain *why* the findings matter from a threat intelligence or SOC perspective (just like a real analyst would).`;
+import { SYSTEM_PROMPT } from "./prompt";
+import { executeSparqlQuery } from "./tools";
 
 export async function POST(req: NextRequest) {
   try {
@@ -141,10 +11,8 @@ export async function POST(req: NextRequest) {
 
     let inputMessages = [];
     if (messages && Array.isArray(messages)) {
-      // Don't pass the initial static greeting into the LLM context if possible to save tokens, 
-      // but if we do, it's fine. We'll map them all.
-      inputMessages = messages.map(m =>
-        m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)
+      inputMessages = messages.map((m) =>
+        m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
       );
     } else if (message) {
       inputMessages = [new HumanMessage(message)];
@@ -167,24 +35,20 @@ export async function POST(req: NextRequest) {
       stateModifier: new SystemMessage(SYSTEM_PROMPT),
     });
 
-    const events = await agent.stream(
-      { messages: inputMessages },
-      { streamMode: "values" }
-    );
+    const events = await agent.stream({ messages: inputMessages }, { streamMode: "values" });
 
     let finalResponse = "";
     for await (const event of events) {
       const streamEvent = event as unknown as { messages: AIMessage[] };
-      const messages = streamEvent.messages;
-      const lastMessage = messages[messages.length - 1];
+      const currentMessages = streamEvent.messages;
+      const lastMessage = currentMessages[currentMessages.length - 1];
 
-      // We only want the final AI message that is not a tool call request
       if (lastMessage.getType() === "ai" && (!lastMessage.tool_calls || lastMessage.tool_calls.length === 0)) {
         if (typeof lastMessage.content === "string") {
           finalResponse = lastMessage.content;
         } else if (Array.isArray(lastMessage.content)) {
           finalResponse = (lastMessage.content as { text?: string }[])
-            .map((block) => block.text || "")
+            .map((b) => b.text || "")
             .join("");
         }
       }
@@ -196,7 +60,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ response: finalResponse });
   } catch (error: unknown) {
-    console.error("Agent error:", error);
-    return NextResponse.json({ error: "Internal Server Error", message: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error", message: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

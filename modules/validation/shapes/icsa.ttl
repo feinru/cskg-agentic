@@ -1,0 +1,30 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix icsa: <http://w3id.org/sepses/vocab/ref/icsa#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:ICSAShape
+    a sh:NodeShape ;
+    sh:targetClass icsa:ICSA ;
+    sh:property [
+        sh:path icsa:cveID ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^CVE-\\d{4}-\\d{4,}$" ;
+        sh:severity sh:Violation ;
+        sh:message "Referenced CVE ID in ICSA advisory must match standard format" ;
+    ] ;
+    sh:property [
+        sh:path icsa:vendorProject ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Vendor or project name is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path icsa:product ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Affected product name is mandatory" ;
+    ] .

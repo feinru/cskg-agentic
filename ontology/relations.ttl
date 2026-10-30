@@ -1,0 +1,38 @@
+@prefix cve:     <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix cwe:     <http://w3id.org/sepses/vocab/ref/cwe#> .
+@prefix capec:   <http://w3id.org/sepses/vocab/ref/capec#> .
+@prefix attck:   <http://w3id.org/sepses/vocab/ref/attack#> .
+@prefix cpe:     <http://w3id.org/sepses/vocab/ref/cpe#> .
+@prefix icsa:    <http://w3id.org/sepses/vocab/ref/icsa#> .
+@prefix epss:    <http://w3id.org/sepses/vocab/ref/epss#> .
+@prefix d3fend:  <http://d3fend.mitre.org/ontologies/d3fend.owl#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://w3id.org/sepses/ontology/cskg/relations>
+    a owl:Ontology ;
+    rdfs:label "CSKG Object Properties and Semantic Inverses"@en ;
+    owl:imports <http://w3id.org/sepses/ontology/cskg/classes> .
+
+cve:hasCWE a owl:ObjectProperty ; rdfs:domain cve:CVE ; rdfs:range cwe:CWE ; owl:inverseOf cwe:isWeaknessOf ; rdfs:label "has CWE"@en .
+cwe:isWeaknessOf a owl:ObjectProperty ; rdfs:domain cwe:CWE ; rdfs:range cve:CVE ; owl:inverseOf cve:hasCWE ; rdfs:label "is weakness of"@en .
+
+cve:hasCPE a owl:ObjectProperty ; rdfs:domain cve:CVE ; rdfs:range cpe:CPE ; owl:inverseOf cpe:hasVulnerability ; rdfs:label "has CPE"@en .
+cpe:hasVulnerability a owl:ObjectProperty ; rdfs:domain cpe:CPE ; rdfs:range cve:CVE ; owl:inverseOf cve:hasCPE ; rdfs:label "has vulnerability"@en .
+
+cve:hasEPSS a owl:ObjectProperty ; rdfs:domain cve:CVE ; rdfs:range epss:EPSS ; owl:inverseOf epss:isScoreFor ; rdfs:label "has EPSS"@en .
+epss:isScoreFor a owl:ObjectProperty ; rdfs:domain epss:EPSS ; rdfs:range cve:CVE ; owl:inverseOf cve:hasEPSS ; rdfs:label "is score for"@en .
+
+cwe:hasCAPEC a owl:ObjectProperty ; rdfs:domain cwe:CWE ; rdfs:range capec:CAPEC ; owl:inverseOf capec:targetsWeakness ; rdfs:label "has CAPEC"@en .
+capec:targetsWeakness a owl:ObjectProperty ; rdfs:domain capec:CAPEC ; rdfs:range cwe:CWE ; owl:inverseOf cwe:hasCAPEC ; rdfs:label "targets weakness"@en .
+
+capec:hasRelatedAttackPattern a owl:ObjectProperty ; rdfs:domain capec:CAPEC ; rdfs:range attck:AttackPattern ; owl:inverseOf attck:relatedCAPEC ; rdfs:label "has related attack pattern"@en .
+attck:relatedCAPEC a owl:ObjectProperty ; rdfs:domain attck:AttackPattern ; rdfs:range capec:CAPEC ; owl:inverseOf capec:hasRelatedAttackPattern ; rdfs:label "related CAPEC"@en .
+
+icsa:hasCVE a owl:ObjectProperty ; rdfs:domain icsa:ICSA ; rdfs:range cve:CVE ; owl:inverseOf cve:addressedInICSA ; rdfs:label "has CVE"@en .
+cve:addressedInICSA a owl:ObjectProperty ; rdfs:domain cve:CVE ; rdfs:range icsa:ICSA ; owl:inverseOf icsa:hasCVE ; rdfs:label "addressed in ICSA"@en .
+
+d3fend:counters a owl:ObjectProperty ; rdfs:domain d3fend:DefensiveTechnique ; rdfs:range attck:AttackPattern ; owl:inverseOf attck:counteredBy ; rdfs:label "counters"@en .
+attck:counteredBy a owl:ObjectProperty ; rdfs:domain attck:AttackPattern ; rdfs:range d3fend:DefensiveTechnique ; owl:inverseOf d3fend:counters ; rdfs:label "countered by"@en .
+

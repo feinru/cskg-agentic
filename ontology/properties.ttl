@@ -1,0 +1,53 @@
+@prefix cve:     <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix cwe:     <http://w3id.org/sepses/vocab/ref/cwe#> .
+@prefix capec:   <http://w3id.org/sepses/vocab/ref/capec#> .
+@prefix attck:   <http://w3id.org/sepses/vocab/ref/attack#> .
+@prefix cpe:     <http://w3id.org/sepses/vocab/ref/cpe#> .
+@prefix icsa:    <http://w3id.org/sepses/vocab/ref/icsa#> .
+@prefix epss:    <http://w3id.org/sepses/vocab/ref/epss#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<http://w3id.org/sepses/ontology/cskg/properties>
+    a owl:Ontology ;
+    rdfs:label "CSKG Datatype Properties"@en ;
+    owl:imports <http://w3id.org/sepses/ontology/cskg/classes> .
+
+cve:id a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:string ; rdfs:label "CVE ID"@en .
+cve:description a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:string ; rdfs:label "Description"@en .
+cve:baseScore a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:decimal ; rdfs:label "CVSS Base Score"@en .
+cve:severity a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:string ; rdfs:label "CVSS Severity"@en .
+cve:published a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:dateTime ; rdfs:label "Published Date"@en .
+cve:lastModified a owl:DatatypeProperty ; rdfs:domain cve:CVE ; rdfs:range xsd:dateTime ; rdfs:label "Last Modified Date"@en .
+
+cwe:id a owl:DatatypeProperty ; rdfs:domain cwe:CWE ; rdfs:range xsd:string ; rdfs:label "CWE ID"@en .
+cwe:name a owl:DatatypeProperty ; rdfs:domain cwe:CWE ; rdfs:range xsd:string ; rdfs:label "CWE Name"@en .
+cwe:description a owl:DatatypeProperty ; rdfs:domain cwe:CWE ; rdfs:range xsd:string ; rdfs:label "Description"@en .
+
+capec:id a owl:DatatypeProperty ; rdfs:domain capec:CAPEC ; rdfs:range xsd:string ; rdfs:label "CAPEC ID"@en .
+capec:name a owl:DatatypeProperty ; rdfs:domain capec:CAPEC ; rdfs:range xsd:string ; rdfs:label "CAPEC Name"@en .
+capec:description a owl:DatatypeProperty ; rdfs:domain capec:CAPEC ; rdfs:range xsd:string ; rdfs:label "Description"@en .
+
+attck:id a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:string ; rdfs:label "STIX ID"@en .
+attck:techniqueId a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:string ; rdfs:label "Technique ID"@en .
+attck:name a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:string ; rdfs:label "Technique Name"@en .
+attck:description a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:string ; rdfs:label "Description"@en .
+attck:tactic a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:string ; rdfs:label "Tactic"@en .
+attck:isSubtechnique a owl:DatatypeProperty ; rdfs:domain attck:AttackPattern ; rdfs:range xsd:boolean ; rdfs:label "Is Subtechnique"@en .
+
+cpe:id a owl:DatatypeProperty ; rdfs:domain cpe:CPE ; rdfs:range xsd:string ; rdfs:label "CPE ID"@en .
+cpe:cpe23Uri a owl:DatatypeProperty ; rdfs:domain cpe:CPE ; rdfs:range xsd:string ; rdfs:label "CPE 2.3 URI"@en .
+cpe:vendor a owl:DatatypeProperty ; rdfs:domain cpe:CPE ; rdfs:range xsd:string ; rdfs:label "Vendor"@en .
+cpe:product a owl:DatatypeProperty ; rdfs:domain cpe:CPE ; rdfs:range xsd:string ; rdfs:label "Product"@en .
+cpe:version a owl:DatatypeProperty ; rdfs:domain cpe:CPE ; rdfs:range xsd:string ; rdfs:label "Version"@en .
+
+icsa:cveID a owl:DatatypeProperty ; rdfs:domain icsa:ICSA ; rdfs:range xsd:string ; rdfs:label "CVE ID"@en .
+icsa:vendorProject a owl:DatatypeProperty ; rdfs:domain icsa:ICSA ; rdfs:range xsd:string ; rdfs:label "Vendor Project"@en .
+icsa:product a owl:DatatypeProperty ; rdfs:domain icsa:ICSA ; rdfs:range xsd:string ; rdfs:label "Product"@en .
+icsa:vulnerabilityName a owl:DatatypeProperty ; rdfs:domain icsa:ICSA ; rdfs:range xsd:string ; rdfs:label "Vulnerability Name"@en .
+
+epss:cveID a owl:DatatypeProperty ; rdfs:domain epss:EPSS ; rdfs:range xsd:string ; rdfs:label "CVE ID"@en .
+epss:epssScore a owl:DatatypeProperty ; rdfs:domain epss:EPSS ; rdfs:range xsd:decimal ; rdfs:label "EPSS Score"@en .
+epss:epssPercentile a owl:DatatypeProperty ; rdfs:domain epss:EPSS ; rdfs:range xsd:decimal ; rdfs:label "EPSS Percentile"@en .

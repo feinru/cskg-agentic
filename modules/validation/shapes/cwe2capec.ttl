@@ -1,0 +1,14 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cwe: <http://w3id.org/sepses/vocab/ref/cwe#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CWEhasCAPECShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf cwe:hasCAPEC ;
+    sh:property [
+        sh:path cwe:hasCAPEC ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^http://w3id\\.org/sepses/resource/capec/CAPEC-\\d+$" ;
+        sh:severity sh:Violation ;
+        sh:message "cwe:hasCAPEC target must be a valid SEPSES CAPEC resource IRI (e.g. http://w3id.org/sepses/resource/capec/CAPEC-63)" ;
+    ] .

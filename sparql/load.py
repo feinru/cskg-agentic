@@ -10,6 +10,9 @@ if str(parent_dir) not in sys.path:
 
 from modules.config import (
     GRAPH_BASE,
+    INFERENCE_RULE_SET,
+    ONTOLOGY_DIR,
+    ONTOLOGY_GRAPH,
     VIRTUOSO_HOST,
     VIRTUOSO_SPARQL,
 )
@@ -42,6 +45,17 @@ def run_isql(command: str) -> tuple[bool, str]:
     return (result.returncode, output)
 
 
+def check_loader_error(filename: str) -> str | None:
+    code, out = run_isql(
+        f"SELECT ll_error FROM DB.DBA.load_list WHERE ll_file LIKE '%/{filename}' AND ll_error IS NOT NULL;"
+    )
+    if code == 0 and "Rows" in out and "0 Rows" not in out and "NULL" not in out:
+        lines = [l.strip() for l in out.splitlines() if l.strip() and not l.startswith("ll_error") and not l.startswith("_") and "Rows" not in l]
+        if lines:
+            return " ".join(lines)
+    return None
+
+
 def load_ttl_via_isql(ttl_file: Path, graph_uri: str) -> bool:
     stem = ttl_file.stem
     print(f"\n[SPARQL] Processing: {stem}")
@@ -57,6 +71,10 @@ def load_ttl_via_isql(ttl_file: Path, graph_uri: str) -> bool:
         command = f"SPARQL CLEAR GRAPH <{graph_uri}>; SPARQL LOAD <file:///opt/virtuoso-opensource/vsp/toload/{ttl_file.name}> INTO GRAPH <{graph_uri}>;"
     returncode, output = run_isql(command)
     if returncode == 0 and "*** Error" not in output:
+        ll_err = check_loader_error(ttl_file.name)
+        if ll_err:
+            print(f"[{stem}] Virtuoso Loader Error: {ll_err}")
+            return False
         run_isql(
             f"DB.DBA.RDF_GRAPH_USER_PERMS_SET ('{graph_uri}', 'nobody', 1); checkpoint; commit work;"
         )
@@ -71,6 +89,10 @@ def load_ttl_via_isql(ttl_file: Path, graph_uri: str) -> bool:
         )
         returncode, output = run_isql(bulk_command)
         if returncode == 0 and "*** Error" not in output:
+            ll_err = check_loader_error(ttl_file.name)
+            if ll_err:
+                print(f"[{stem}] Virtuoso Loader Error: {ll_err}")
+                return False
             run_isql(
                 f"DB.DBA.RDF_GRAPH_USER_PERMS_SET ('{graph_uri}', 'nobody', 1); checkpoint; commit work;"
             )
@@ -102,6 +124,30 @@ def verify_endpoint() -> int | None:
     return None
 
 
+def load_ontology_and_rules() -> bool:
+    print(f"\n[SPARQL] Loading CSKG Core Ontology & Semantic Rules...")
+    onto_dir = TOLOAD_DIR / "ontology"
+    source_dir = onto_dir if (onto_dir.exists() and (onto_dir / "ontology.ttl").exists()) else ONTOLOGY_DIR
+    target_names = ["core.ttl", "classes.ttl", "relations.ttl", "properties.ttl", "ontology.ttl"]
+    onto_files = [source_dir / name for name in target_names if (source_dir / name).exists()]
+    if not onto_files:
+        print("[SPARQL] No ontology files found to load.")
+        return False
+
+    run_isql(f"SPARQL CLEAR GRAPH <{ONTOLOGY_GRAPH}>;")
+    for f in onto_files:
+        rel_path = f"ontology/{f.name}" if (TOLOAD_DIR / "ontology" / f.name).exists() else f.name
+        cmd = f"SPARQL LOAD <file:///opt/virtuoso-opensource/vsp/toload/{rel_path}> INTO GRAPH <{ONTOLOGY_GRAPH}>;"
+        code, out = run_isql(cmd)
+        if code != 0 or "*** Error" in out:
+            print(f"[Ontology] Error loading {f.name}: {out[:120]}")
+
+    run_isql(f"DB.DBA.RDF_GRAPH_USER_PERMS_SET ('{ONTOLOGY_GRAPH}', 'nobody', 1);")
+    run_isql(f"rdfs_rule_set ('{INFERENCE_RULE_SET}', '{ONTOLOGY_GRAPH}'); checkpoint; commit work;")
+    print(f"[Ontology] Loaded {len(onto_files)} ontology modules into <{ONTOLOGY_GRAPH}> with rule set '{INFERENCE_RULE_SET}'.")
+    return True
+
+
 def main():
     ttl_files = sorted(
         [
@@ -123,9 +169,12 @@ def main():
             success += 1
         else:
             failed += 1
+
+    load_ontology_and_rules()
+
     total_triples = verify_endpoint()
     print("\n[SPARQL] Final Results")
-    print(f"Successful : {success} graphs")
+    print(f"Successful : {success} data graphs + ontology")
     print(f"Failed     : {failed} graphs")
     if total_triples is not None:
         print(f"Total Triples : {total_triples:,}")

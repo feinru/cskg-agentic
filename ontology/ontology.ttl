@@ -1,0 +1,14 @@
+@prefix cskg:    <http://w3id.org/sepses/ontology/cskg#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://w3id.org/sepses/ontology/cskg>
+    a owl:Ontology ;
+    rdfs:label "Cybersecurity Knowledge Graph (CSKG) Master Ontology"@en ;
+    rdfs:comment "Modular master ontology for CSKG importing core taxonomy, domain classes, relations, and properties."@en ;
+    owl:versionInfo "1.0.0" ;
+    owl:imports <http://w3id.org/sepses/ontology/cskg/core> ,
+                <http://w3id.org/sepses/ontology/cskg/classes> ,
+                <http://w3id.org/sepses/ontology/cskg/relations> ,
+                <http://w3id.org/sepses/ontology/cskg/properties> .

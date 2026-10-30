@@ -1,0 +1,14 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix d3fend: <http://d3fend.mitre.org/ontologies/d3fend.owl#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:D3FENDcountersShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf d3fend:counters ;
+    sh:property [
+        sh:path d3fend:counters ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^http://w3id\\.org/sepses/resource/attack/[A-Za-z0-9_.-]+$" ;
+        sh:severity sh:Violation ;
+        sh:message "d3fend:counters target must be a valid SEPSES attack resource IRI" ;
+    ] .

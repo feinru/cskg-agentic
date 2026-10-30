@@ -1,0 +1,30 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix attck: <http://w3id.org/sepses/vocab/ref/attack#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:AttackPatternShape
+    a sh:NodeShape ;
+    sh:targetClass attck:AttackPattern ;
+    sh:property [
+        sh:path attck:id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Technical STIX identifier of the attack pattern is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path attck:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Name of the ATT&CK technique is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path attck:techniqueId ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^T\\d{4}(\\.\\d{3})?$" ;
+        sh:severity sh:Violation ;
+        sh:message "Official MITRE ATT&CK technique identifier format required (e.g. T1059 or T1059.001)" ;
+    ] .

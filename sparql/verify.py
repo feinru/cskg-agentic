@@ -69,6 +69,22 @@ def main():
             "SELECT ?defTech ?attck WHERE {\n               GRAPH <http://w3id.org/sepses/graph/d3fend2attck> {\n                 ?defTech <http://d3fend.mitre.org/ontologies/d3fend.owl#counters> ?attck .\n               }\n             } LIMIT 3",
             "Sample D3FEND countermeasures to ATT&CK techniques",
         ),
+        (
+            "SELECT (COUNT(*) AS ?total) WHERE {\n               GRAPH <http://w3id.org/sepses/graph/ontology> { ?s ?p ?o }\n             }",
+            "CSKG Core Ontology Graph",
+        ),
+        (
+            'DEFINE input:inference "cskg"\n             SELECT ?cwe ?cve WHERE {\n               ?cwe <http://w3id.org/sepses/vocab/ref/cwe#isWeaknessOf> ?cve .\n             } LIMIT 3',
+            "Semantic Reasoning: Inferred inverseOf (cwe:isWeaknessOf <- cve:hasCWE)",
+        ),
+        (
+            'DEFINE input:inference "cskg"\n             SELECT ?tech ?defTech WHERE {\n               ?tech <http://w3id.org/sepses/vocab/ref/attack#counteredBy> ?defTech .\n             } LIMIT 3',
+            "Semantic Reasoning: Inferred inverseOf (attck:counteredBy <- d3fend:counters)",
+        ),
+        (
+            'DEFINE input:inference "cskg"\n             SELECT ?entity WHERE {\n               ?entity a <http://w3id.org/sepses/ontology/cskg#SecurityEntity> .\n             } LIMIT 3',
+            "Semantic Reasoning: SubClassOf taxonomy (cskg:SecurityEntity)",
+        ),
     ]
     passed = 0
     for sparql, desc in tests:

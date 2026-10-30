@@ -6,4 +6,6 @@ rdflib
 requests
 matplotlib
 pandas
-
+pyshacl
+orjson
+ijson

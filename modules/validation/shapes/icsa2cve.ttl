@@ -1,0 +1,14 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix icsa: <http://w3id.org/sepses/vocab/ref/icsa#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:ICSAhasCVEShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf icsa:hasCVE ;
+    sh:property [
+        sh:path icsa:hasCVE ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^http://w3id\\.org/sepses/resource/cve/CVE-\\d{4}-\\d{4,}$" ;
+        sh:severity sh:Violation ;
+        sh:message "icsa:hasCVE target must be a valid SEPSES CVE resource IRI" ;
+    ] .

@@ -1,0 +1,57 @@
+@prefix cskg:    <http://w3id.org/sepses/ontology/cskg#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://w3id.org/sepses/ontology/cskg/core>
+    a owl:Ontology ;
+    rdfs:label "CSKG Core Taxonomy"@en ;
+    rdfs:comment "Abstract root security concepts and high-level taxonomy."@en ;
+    owl:versionInfo "1.0.0" .
+
+cskg:SecurityEntity
+    a owl:Class ;
+    rdfs:label "Security Entity"@en ;
+    rdfs:comment "Top-level root class for all cybersecurity entities in CSKG."@en .
+
+cskg:Vulnerability
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Vulnerability"@en ;
+    rdfs:comment "A security flaw in software/hardware that can be exploited."@en .
+
+cskg:Weakness
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Weakness"@en ;
+    rdfs:comment "A software security error, flaw, or bug in code or design."@en .
+
+cskg:AttackPattern
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Attack Pattern or Technique"@en ;
+    rdfs:comment "Adversary tactics, techniques, and attack patterns."@en .
+
+cskg:AffectedAsset
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Affected Asset or Platform"@en ;
+    rdfs:comment "Software application, operating system, or platform."@en .
+
+cskg:ThreatAdvisory
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Threat Advisory"@en ;
+    rdfs:comment "Security advisory documenting active exploitation in the wild."@en .
+
+cskg:RiskMetric
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Risk Metric"@en ;
+    rdfs:comment "Quantitative metric assessing risk or exploitation probability."@en .
+
+cskg:Countermeasure
+    a owl:Class ;
+    rdfs:subClassOf cskg:SecurityEntity ;
+    rdfs:label "Defensive Countermeasure"@en ;
+    rdfs:comment "Defensive action or technology that counters cyber techniques."@en .

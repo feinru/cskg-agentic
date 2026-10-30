@@ -5,6 +5,8 @@
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .message {
@@ -13,6 +15,8 @@
   gap: 1rem;
   margin-bottom: 2rem;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .messageUser {
@@ -22,6 +26,8 @@
 .messageUser .messageContent {
   flex: 0 1 auto;
   text-align: left;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .messageAgent {
@@ -30,12 +36,18 @@
 }
 .messageAgent .messageContent {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .markdownOutput {
   font-family: inherit;
   line-height: 1.6;
   white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .markdownOutput > :first-child {
@@ -104,6 +116,8 @@
   overflow-x: auto;
   border-radius: 2px;
   font-size: 0.9rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .markdownOutput code {
@@ -112,12 +126,17 @@
   padding: 0.15rem 0.3rem;
   border-radius: 2px;
   font-size: 0.9em;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .markdownOutput pre code {
   background-color: transparent;
   padding: 0;
   font-size: 1em;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: pre;
 }
 
 .messageIndicator {
@@ -132,6 +151,10 @@
 .messageContent {
   white-space: pre-wrap;
   color: var(--text-primary);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .messageContent pre {
@@ -143,6 +166,8 @@
   margin: 1.25rem 0;
   font-size: 13.5px;
   line-height: 1.5;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .messageContent code {
@@ -158,6 +183,9 @@
   background-color: transparent;
   padding: 0;
   border: none;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .inputContainer {
@@ -245,3 +273,81 @@
 .loadingDots span {
   display: none;
 }
+
+.codeBlockWrapper {
+  margin: 1rem 0;
+  max-width: 100%;
+}
+
+.codeContainer {
+  border: 1px solid var(--border-dark);
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  margin: 1rem 0;
+  max-width: 100%;
+}
+
+.codeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid var(--border-dark);
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.copyCodeButton {
+  background: #ffffff;
+  border: 1px solid var(--border-dark);
+  border-radius: 2px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copyCodeButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.codePre {
+  margin: 0 !important;
+  padding: 0.85rem 1rem !important;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  background-color: transparent !important;
+  border: none !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.inlineCode {
+  font-family: Consolas, 'Courier New', monospace;
+  background-color: #f1f3f5;
+  border: 1px solid #e2e5e8;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+  color: #1f2328;
+}
+
+.uriBadge {
+  font-family: Consolas, 'Courier New', monospace;
+  background-color: #eef3fc;
+  border: 1px solid #c9d7f2;
+  color: var(--accent-hover);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+  display: inline-block;
+}
+

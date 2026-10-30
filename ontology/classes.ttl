@@ -1,0 +1,65 @@
+@prefix cskg:    <http://w3id.org/sepses/ontology/cskg#> .
+@prefix cve:     <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix cwe:     <http://w3id.org/sepses/vocab/ref/cwe#> .
+@prefix capec:   <http://w3id.org/sepses/vocab/ref/capec#> .
+@prefix attck:   <http://w3id.org/sepses/vocab/ref/attack#> .
+@prefix cpe:     <http://w3id.org/sepses/vocab/ref/cpe#> .
+@prefix icsa:    <http://w3id.org/sepses/vocab/ref/icsa#> .
+@prefix epss:    <http://w3id.org/sepses/vocab/ref/epss#> .
+@prefix d3fend:  <http://d3fend.mitre.org/ontologies/d3fend.owl#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://w3id.org/sepses/ontology/cskg/classes>
+    a owl:Ontology ;
+    rdfs:label "CSKG Domain Entity Classes"@en ;
+    owl:imports <http://w3id.org/sepses/ontology/cskg/core> .
+
+cve:CVE
+    a owl:Class ;
+    rdfs:subClassOf cskg:Vulnerability ;
+    rdfs:label "Common Vulnerabilities and Exposures (CVE)"@en ;
+    rdfs:comment "A publicly known information security vulnerability."@en .
+
+cwe:CWE
+    a owl:Class ;
+    rdfs:subClassOf cskg:Weakness ;
+    rdfs:label "Common Weakness Enumeration (CWE)"@en ;
+    rdfs:comment "A categorized community-developed list of common software weaknesses."@en .
+
+capec:CAPEC
+    a owl:Class ;
+    rdfs:subClassOf cskg:AttackPattern ;
+    rdfs:label "Common Attack Pattern Enumeration and Classification (CAPEC)"@en ;
+    rdfs:comment "A comprehensive dictionary of known patterns of cyber attacks."@en .
+
+attck:AttackPattern
+    a owl:Class ;
+    rdfs:subClassOf cskg:AttackPattern ;
+    rdfs:label "MITRE ATT&CK Technique"@en ;
+    rdfs:comment "Adversary tactics, techniques, and procedures (TTPs)."@en .
+
+cpe:CPE
+    a owl:Class ;
+    rdfs:subClassOf cskg:AffectedAsset ;
+    rdfs:label "Common Platform Enumeration (CPE)"@en ;
+    rdfs:comment "A structured naming scheme for IT systems and software."@en .
+
+icsa:ICSA
+    a owl:Class ;
+    rdfs:subClassOf cskg:ThreatAdvisory ;
+    rdfs:label "CISA Known Exploited Vulnerability (KEV) Advisory"@en ;
+    rdfs:comment "CISA advisories for vulnerabilities known to be exploited."@en .
+
+epss:EPSS
+    a owl:Class ;
+    rdfs:subClassOf cskg:RiskMetric ;
+    rdfs:label "Exploit Prediction Scoring System (EPSS)"@en ;
+    rdfs:comment "Empirical probability score that a vulnerability will be exploited."@en .
+
+d3fend:DefensiveTechnique
+    a owl:Class ;
+    rdfs:subClassOf cskg:Countermeasure ;
+    rdfs:label "MITRE D3FEND Defensive Technique"@en ;
+    rdfs:comment "A defensive cybersecurity capability or countermeasure."@en .

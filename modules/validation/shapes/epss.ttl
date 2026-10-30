@@ -1,0 +1,33 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix epss: <http://w3id.org/sepses/vocab/ref/epss#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:EPSSShape
+    a sh:NodeShape ;
+    sh:targetClass epss:EPSS ;
+    sh:property [
+        sh:path epss:cveID ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^CVE-\\d{4}-\\d{4,}$" ;
+        sh:severity sh:Violation ;
+        sh:message "Referenced CVE ID in EPSS prediction must match standard format" ;
+    ] ;
+    sh:property [
+        sh:path epss:epssScore ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0 ;
+        sh:severity sh:Violation ;
+        sh:message "EPSS exploit probability score must be a decimal between 0.0 and 1.0" ;
+    ] ;
+    sh:property [
+        sh:path epss:epssPercentile ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0 ;
+        sh:severity sh:Warning ;
+        sh:message "EPSS percentile rank must be a decimal between 0.0 and 1.0" ;
+    ] .

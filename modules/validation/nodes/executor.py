@@ -1,12 +1,25 @@
-import re
 import traceback
 from pathlib import Path
 
-from rdflib import RDF, Graph, URIRef
+from pyshacl import validate
+from rdflib import RDF, Graph, Namespace
 
-from modules.config import NAMESPACES, VALIDATION_RULES
-
+from modules.config import SHACL_SHAPES_DIR
 from ..state import ValidationState
+
+SH = Namespace("http://www.w3.org/ns/shacl#")
+
+_SHACL_SHAPES_GRAPH: Graph | None = None
+
+
+def get_shacl_shapes_graph() -> Graph:
+    global _SHACL_SHAPES_GRAPH
+    if _SHACL_SHAPES_GRAPH is None:
+        shapes_g = Graph()
+        for shape_file in sorted(SHACL_SHAPES_DIR.glob("*.ttl")):
+            shapes_g.parse(str(shape_file), format="turtle")
+        _SHACL_SHAPES_GRAPH = shapes_g
+    return _SHACL_SHAPES_GRAPH
 
 
 def executor(state: ValidationState) -> ValidationState:
@@ -21,10 +34,12 @@ def executor(state: ValidationState) -> ValidationState:
             "current_task": next_task,
             "validation_results": validation_results,
         }
+
     file_name = task["file_name"]
     file_path = task["file_path"]
     link_type = task["link_type"]
-    print(f"\n[Validation] Processing: {link_type}")
+    print(f"\n[Validation] W3C SHACL validating: {link_type} ({file_name})")
+
     result = {
         "file_name": file_name,
         "file_path": file_path,
@@ -38,12 +53,13 @@ def executor(state: ValidationState) -> ValidationState:
         "findings": [],
         "error_detail": None,
     }
+
     try:
         p = Path(file_path)
         file_size_mb = p.stat().st_size / (1024 * 1024)
         file_graph = Graph()
 
-        if file_size_mb > 20.0:
+        if file_size_mb > 15.0:
             sample_lines = []
             total_triples_est = 0
             with open(p, "r", encoding="utf-8") as f:
@@ -73,160 +89,51 @@ def executor(state: ValidationState) -> ValidationState:
             print(
                 f"[{link_type}] Parsed: {total_triples:,} triples ({len(target_subjects):,} subjects)"
             )
-        g = Graph()
-        for prefix, uri in NAMESPACES.items():
-            g.bind(prefix, URIRef(uri))
-        origin = task.get("origin")
-        if origin == "linking" or "to_" in file_name or "2" in file_name:
-            parser_output_dir = Path("modules/parser/output")
-            link_prefix = file_name.replace(".ttl", "").lower()
-            relevant_bases = set()
-            if "cwe" in link_prefix:
-                relevant_bases.add("cwe.ttl")
-            if "capec" in link_prefix:
-                relevant_bases.add("capec.ttl")
-            if "attck" in link_prefix or "attack" in link_prefix:
-                relevant_bases.update(
-                    [
-                        "attck_enterprise.ttl",
-                        "attck_ics.ttl",
-                        "attck_mobile.ttl",
-                    ]
-                )
-            if "icsa" in link_prefix:
-                relevant_bases.add("icsa.ttl")
-            if "epss" in link_prefix and file_size_mb < 50.0:
-                relevant_bases.add("epss.ttl")
-            if "d3fend" in link_prefix:
-                relevant_bases.add("d3fend.ttl")
 
-            for base_file in sorted(relevant_bases):
-                base_path = parser_output_dir / base_file
-                if base_path.exists():
-                    g.parse(str(base_path), format="turtle")
-        for triple in file_graph:
-            g.add(triple)
-        for subj in sorted(target_subjects):
-            if not isinstance(subj, URIRef):
-                continue
-            types = list(g.objects(subj, RDF.type))
-            if not types:
+        shapes_graph = get_shacl_shapes_graph()
+        conforms, results_graph, results_text = validate(
+            data_graph=file_graph,
+            shacl_graph=shapes_graph,
+            inference="none",
+            abort_on_first_error=False,
+        )
+
+        for res in results_graph.subjects(RDF.type, SH.ValidationResult):
+            sev = results_graph.value(res, SH.resultSeverity)
+            focus_node = results_graph.value(res, SH.focusNode)
+            result_path = results_graph.value(res, SH.resultPath)
+            result_msg = results_graph.value(res, SH.resultMessage)
+            source_shape = results_graph.value(res, SH.sourceShape)
+            source_constraint = results_graph.value(res, SH.sourceConstraintComponent)
+
+            if sev == SH.Violation:
+                result["errors_count"] += 1
+                level = "ERROR"
+            elif sev == SH.Warning:
+                result["warnings_count"] += 1
+                level = "WARNING"
+            else:
+                level = "INFO"
+
+            if len(result["findings"]) < 200:
                 result["findings"].append(
                     {
-                        "subject": str(subj),
-                        "property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                        "level": "WARNING",
-                        "message": "Entity lacks formal class declaration (rdf:type).",
-                        "rule": "Ontology Conformance Check",
+                        "subject": str(focus_node) if focus_node else str(file_path),
+                        "property": str(result_path) if result_path else "",
+                        "level": level,
+                        "message": str(result_msg) if result_msg else "SHACL constraint violation",
+                        "rule": str(source_shape or source_constraint or "W3C SHACL Shape"),
                     }
                 )
-                result["warnings_count"] += 1
-                continue
-            for subj_type in types:
-                type_str = str(subj_type)
-                if type_str in VALIDATION_RULES:
-                    rules = VALIDATION_RULES[type_str]
-                    if "mandatory_properties" in rules:
-                        for prop_uri, prop_rule in rules[
-                            "mandatory_properties"
-                        ].items():
-                            pred_ref = URIRef(prop_uri)
-                            values = list(g.objects(subj, pred_ref))
-                            if not values:
-                                severity = prop_rule.get("severity", "WARNING")
-                                result["findings"].append(
-                                    {
-                                        "subject": str(subj),
-                                        "property": prop_uri,
-                                        "level": severity,
-                                        "message": f"Missing mandatory property: {prop_rule.get('description', '')}",
-                                        "rule": "Missing Mandatory Triple Detection",
-                                    }
-                                )
-                                if severity == "ERROR":
-                                    result["errors_count"] += 1
-                                else:
-                                    result["warnings_count"] += 1
-                            elif "regex" in prop_rule:
-                                pattern = prop_rule["regex"]
-                                for val in values:
-                                    val_str = str(val)
-                                    if not re.match(pattern, val_str):
-                                        result["findings"].append(
-                                            {
-                                                "subject": str(subj),
-                                                "property": prop_uri,
-                                                "level": "ERROR",
-                                                "message": f"Literal format anomaly '{val_str}' does not match regex '{pattern}'. {prop_rule.get('description', '')}",
-                                                "rule": "Format Regex & Value Check",
-                                            }
-                                        )
-                                        result["errors_count"] += 1
-                    if "links" in rules:
-                        for prop_uri, link_rule in rules["links"].items():
-                            pred_ref = URIRef(prop_uri)
-                            links = list(g.objects(subj, pred_ref))
-                            if not links:
-                                if origin != "parser":
-                                    severity = link_rule.get("severity", "WARNING")
-                                    result["findings"].append(
-                                        {
-                                            "subject": str(subj),
-                                            "property": prop_uri,
-                                            "level": severity,
-                                            "message": f"Missing relation to class {link_rule['target_class'].split('#')[-1]}: {link_rule.get('description', '')}",
-                                            "rule": "Missing Relationship Link",
-                                        }
-                                    )
-                                    if severity == "ERROR":
-                                        result["errors_count"] += 1
-                                    else:
-                                        result["warnings_count"] += 1
-                            else:
-                                target_class_uri = link_rule["target_class"]
-                                for target in links:
-                                    target_str = str(target)
-                                    target_types = list(g.objects(target, RDF.type))
-                                    has_proper_type = (
-                                        URIRef(target_class_uri) in target_types
-                                    )
-                                    raw_indicator = target_class_uri.split("#")[
-                                        -1
-                                    ].lower()
-                                    class_indicator = (
-                                        "attack"
-                                        if "attack" in raw_indicator
-                                        else raw_indicator
-                                    )
-                                    has_proper_uri_prefix = (
-                                        f"/{class_indicator}/" in target_str
-                                        or f"#{class_indicator}" in target_str
-                                    )
-                                    if not has_proper_type and (
-                                        not has_proper_uri_prefix
-                                    ):
-                                        result["findings"].append(
-                                            {
-                                                "subject": str(subj),
-                                                "property": prop_uri,
-                                                "level": link_rule.get(
-                                                    "severity", "WARNING"
-                                                ),
-                                                "message": f"Broken Link or reference anomaly: Object '{target_str}' is not of type {class_indicator.upper()}.",
-                                                "rule": "Broken Link & Target Type Check",
-                                            }
-                                        )
-                                        if link_rule.get("severity") == "ERROR":
-                                            result["errors_count"] += 1
-                                        else:
-                                            result["warnings_count"] += 1
+
         result["status"] = "success"
         print(
-            f"[{link_type}] Result: {result['errors_count']} Errors, {result['warnings_count']} Warnings"
+            f"[{link_type}] SHACL Conforms: {conforms} | {result['errors_count']} Violations, {result['warnings_count']} Warnings"
         )
+
     except (OSError, ValueError, RuntimeError, KeyError) as e:
         error_msg = f"{e!s}\n{traceback.format_exc()}"
-        print(f"[{link_type}] Error: Critical failure reading {file_name}: {e}")
+        print(f"[{link_type}] Error: Critical validation failure on {file_name}: {e}")
         result["status"] = "failed"
         result["critical_errors_count"] = 1
         result["error_detail"] = error_msg
@@ -235,10 +142,11 @@ def executor(state: ValidationState) -> ValidationState:
                 "subject": file_path,
                 "property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                 "level": "CRITICAL",
-                "message": f"Syntax Error / Failed to parse Turtle file: {e!s}",
-                "rule": "RDF Syntax Parser Check",
+                "message": f"Syntax Error / Failed to parse or validate Turtle graph: {e!s}",
+                "rule": "W3C SHACL Validation Parser",
             }
         )
+
     validation_results = state.get("validation_results", [])
     validation_results.append(result)
     validation_plan = state.get("validation_plan", [])

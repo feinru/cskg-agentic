@@ -1,5 +1,7 @@
 import json
+import re
 import traceback
+from typing import Any
 
 from modules.config import PARSER_OUTPUT_DIR, RESOURCE_BASE, VOCAB_NS
 
@@ -7,6 +9,29 @@ from ..mapper import OntologyMapper
 from ..parsers.jparser import JSONParser
 from ..parsers.xparser import XMLParser
 from ..state import ParserState
+
+
+def _format_literal(pred_name: str, value: Any) -> str:
+    if value is None:
+        return '""'
+    if pred_name in ("baseScore", "epssScore", "epssPercentile"):
+        try:
+            val_float = float(value)
+            return f'"{val_float}"^^<http://www.w3.org/2001/XMLSchema#decimal>'
+        except (ValueError, TypeError):
+            pass
+    elif pred_name in ("published", "lastModified"):
+        val_str = str(value).strip()
+        if re.match(
+            r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$",
+            val_str,
+        ):
+            return f'"{val_str}"^^<http://www.w3.org/2001/XMLSchema#dateTime>'
+    elif pred_name == "isSubtechnique":
+        bool_str = "true" if value and str(value).lower() in ("true", "1") else "false"
+        return f'"{bool_str}"^^<http://www.w3.org/2001/XMLSchema#boolean>'
+
+    return json.dumps(str(value))
 
 
 def build_subject_uri(
@@ -141,10 +166,10 @@ def executor(state: ParserState) -> ParserState:
                                         f"<{pred_uri}> <http://w3id.org/sepses/resource/cwe/{cwe_val}>"
                                     )
                                 else:
-                                    lines.append(f"<{pred_uri}> {json.dumps(str(v))}")
+                                    lines.append(f"<{pred_uri}> {_format_literal(pred_name, v)}")
                                 triples_count += 1
                     else:
-                        lines.append(f"<{pred_uri}> {json.dumps(str(value))}")
+                        lines.append(f"<{pred_uri}> {_format_literal(pred_name, value)}")
                         triples_count += 1
 
                 if lines:

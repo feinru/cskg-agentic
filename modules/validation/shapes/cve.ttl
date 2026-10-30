@@ -1,0 +1,43 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cve: <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CVEShape
+    a sh:NodeShape ;
+    sh:targetClass cve:CVE ;
+    sh:property [
+        sh:path cve:id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^CVE-\\d{4}-\\d{4,}$" ;
+        sh:severity sh:Violation ;
+        sh:message "CVE identifier must match standard NVD format (CVE-YYYY-NNNN+)" ;
+    ] ;
+    sh:property [
+        sh:path cve:description ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Warning ;
+        sh:message "Detailed description of the cybersecurity vulnerability is recommended" ;
+    ] ;
+    sh:property [
+        sh:path cve:baseScore ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 10.0 ;
+        sh:severity sh:Warning ;
+        sh:message "CVSS base score must be a decimal between 0.0 and 10.0" ;
+    ] ;
+    sh:property [
+        sh:path cve:published ;
+        sh:datatype xsd:dateTime ;
+        sh:severity sh:Warning ;
+        sh:message "Published date must be a valid xsd:dateTime timestamp" ;
+    ] ;
+    sh:property [
+        sh:path cve:lastModified ;
+        sh:datatype xsd:dateTime ;
+        sh:severity sh:Warning ;
+        sh:message "Last modified date must be a valid xsd:dateTime timestamp" ;
+    ] .

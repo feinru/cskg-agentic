@@ -11,6 +11,9 @@ CACHE_DIR.mkdir(exist_ok=True, parents=True)
 PARSER_OUTPUT_DIR = BASE_DIR / "modules" / "parser" / "output"
 LINKING_OUTPUT_DIR = BASE_DIR / "modules" / "linking" / "output"
 VALIDATION_REPORTS_DIR = BASE_DIR / "modules" / "validation" / "output" / "reports"
+SHACL_SHAPES_DIR = BASE_DIR / "modules" / "validation" / "shapes"
+SHACL_SHAPES_FILE = SHACL_SHAPES_DIR / "cskg_shapes.ttl"
+ONTOLOGY_DIR = BASE_DIR / "ontology"
 SPARQL_DATA_DIR = BASE_DIR / "sparql" / "data"
 
 NVD_API_KEY = os.getenv("NVD_API_KEY")
@@ -329,6 +332,8 @@ VIRTUOSO_HOST = os.environ.get("VIRTUOSO_HOST", "localhost")
 VIRTUOSO_SPARQL = f"http://{VIRTUOSO_HOST}:8890/sparql"
 VIRTUOSO_CONTAINER = os.environ.get("VIRTUOSO_CONTAINER", "cskg-sparql")
 GRAPH_BASE = "http://w3id.org/sepses/graph/"
+ONTOLOGY_GRAPH = "http://w3id.org/sepses/graph/ontology"
+INFERENCE_RULE_SET = "cskg"
 
 
 class _FetcherRegistry(dict):

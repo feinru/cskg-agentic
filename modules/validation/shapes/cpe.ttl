@@ -1,0 +1,23 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cpe: <http://w3id.org/sepses/vocab/ref/cpe#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CPEShape
+    a sh:NodeShape ;
+    sh:targetClass cpe:CPE ;
+    sh:property [
+        sh:path cpe:id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Unique CPE Name Identifier is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path cpe:cpe23Uri ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^cpe:2\\.3:[aho\\*\\-]:.*" ;
+        sh:severity sh:Violation ;
+        sh:message "Formal CPE v2.3 URI string must follow the official specification" ;
+    ] .

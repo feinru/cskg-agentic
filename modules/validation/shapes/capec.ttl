@@ -1,0 +1,29 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix capec: <http://w3id.org/sepses/vocab/ref/capec#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CAPECShape
+    a sh:NodeShape ;
+    sh:targetClass capec:CAPEC ;
+    sh:property [
+        sh:path capec:id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^CAPEC-\\d+$" ;
+        sh:severity sh:Violation ;
+        sh:message "CAPEC identifier must match standard MITRE format (CAPEC-ID)" ;
+    ] ;
+    sh:property [
+        sh:path capec:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Official attack pattern name is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path capec:description ;
+        sh:datatype xsd:string ;
+        sh:severity sh:Warning ;
+        sh:message "Technical description of the attack pattern is recommended" ;
+    ] .

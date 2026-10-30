@@ -1,0 +1,14 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix capec: <http://w3id.org/sepses/vocab/ref/capec#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CAPEChasRelatedAttackPatternShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf capec:hasRelatedAttackPattern ;
+    sh:property [
+        sh:path capec:hasRelatedAttackPattern ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^http://w3id\\.org/sepses/resource/attack/T\\d{4}(\\.\\d{3})?$" ;
+        sh:severity sh:Violation ;
+        sh:message "capec:hasRelatedAttackPattern target must be a valid SEPSES ATT&CK resource IRI (e.g. http://w3id.org/sepses/resource/attack/T1059)" ;
+    ] .

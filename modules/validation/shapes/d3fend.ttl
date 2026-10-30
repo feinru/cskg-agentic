@@ -1,0 +1,16 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix d3fend: <http://d3fend.mitre.org/ontologies/d3fend.owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:DefensiveTechniqueShape
+    a sh:NodeShape ;
+    sh:targetClass d3fend:DefensiveTechnique ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Official label of the D3FEND defensive technique is mandatory" ;
+    ] .

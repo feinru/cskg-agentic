@@ -208,12 +208,11 @@ def _link_cve_to_cwe_stream(
 
                 if cwe_refs:
                     unique_cwes = list(dict.fromkeys(cwe_refs))
-                    lines = ["a <http://w3id.org/sepses/vocab/ref/cve#CVE>"]
-                    for cwe_val in unique_cwes:
-                        lines.append(
-                            f"<{predicate}> <{RESOURCE_BASE['cwe'] + cwe_val}>"
-                        )
-                        count += 1
+                    lines = [
+                        f"<{predicate}> <{RESOURCE_BASE['cwe'] + cwe_val}>"
+                        for cwe_val in unique_cwes
+                    ]
+                    count += len(unique_cwes)
                     out_f.write(f"<{subject_uri}> " + " ;\n    ".join(lines) + " .\n")
     return count
 
@@ -248,10 +247,8 @@ def _link_cve_to_cpe_stream(
 
                 if cpe_uris:
                     unique_cpes = list(dict.fromkeys(cpe_uris))
-                    lines = ["a <http://w3id.org/sepses/vocab/ref/cve#CVE>"]
-                    for cu in unique_cpes:
-                        lines.append(f"<{predicate}> <{cu}>")
-                        count += 1
+                    lines = [f"<{predicate}> <{cu}>" for cu in unique_cpes]
+                    count += len(unique_cpes)
                     out_f.write(f"<{subject_uri}> " + " ;\n    ".join(lines) + " .\n")
     return count
 
@@ -273,9 +270,7 @@ def _link_cve_to_epss_stream(
                 cve_id = _sanitize_uri_component(cve_id)
                 sub_uri = RESOURCE_BASE["cve"] + cve_id
                 obj_uri = RESOURCE_BASE["epss"] + cve_id
-                out_f.write(
-                    f"<{sub_uri}> a <http://w3id.org/sepses/vocab/ref/cve#CVE> ;\n    <{predicate}> <{obj_uri}> .\n"
-                )
+                out_f.write(f"<{sub_uri}> <{predicate}> <{obj_uri}> .\n")
                 count += 1
     return count
 
@@ -305,7 +300,6 @@ def _link_cwe_to_capec_xml(g: Graph, file_path: str, predicate: URIRef) -> int:
             if not cwe_id:
                 continue
             subject_uri = URIRef(RESOURCE_BASE["cwe"] + f"CWE-{cwe_id}")
-            g.add((subject_uri, RDF.type, NS_CWE.CWE))
             for child in elem.iter():
                 child_tag = _strip_ns(child.tag)
                 if child_tag == "Related_Attack_Pattern":
@@ -335,7 +329,6 @@ def _link_cwe_to_capec_json(g: Graph, file_path: str, predicate: URIRef) -> int:
         if not cwe_id:
             continue
         subject_uri = URIRef(RESOURCE_BASE["cwe"] + f"CWE-{cwe_id}")
-        g.add((subject_uri, RDF.type, NS_CWE.CWE))
         related_patterns = weakness.get("Related_Attack_Patterns", [])
         if isinstance(related_patterns, dict):
             related_patterns = related_patterns.get("Related_Attack_Pattern", [])
@@ -375,7 +368,6 @@ def _link_capec_to_attck_xml(g: Graph, file_path: str, predicate: URIRef) -> int
             if not capec_id:
                 continue
             subject_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
-            g.add((subject_uri, RDF.type, NS_CAPEC.CAPEC))
             for child in elem.iter():
                 child_tag = _strip_ns(child.tag)
                 if child_tag == "Taxonomy_Mapping":
@@ -411,7 +403,6 @@ def _link_capec_to_attck_json(g: Graph, file_path: str, predicate: URIRef) -> in
         if not capec_id:
             continue
         subject_uri = URIRef(RESOURCE_BASE["capec"] + f"CAPEC-{capec_id}")
-        g.add((subject_uri, RDF.type, NS_CAPEC.CAPEC))
         taxonomy_mappings = pattern.get("Taxonomy_Mappings", [])
         if isinstance(taxonomy_mappings, dict):
             taxonomy_mappings = taxonomy_mappings.get("Taxonomy_Mapping", [])
@@ -452,7 +443,6 @@ def _link_icsa_to_cve(g: Graph, subject_files: list[str], predicate: URIRef) -> 
             product = _sanitize_uri_component(vuln.get("product", "unknown"))
             icsa_id = f"{vendor}_{product}_{cve_id}".replace(" ", "_")
             subject_uri = URIRef(RESOURCE_BASE["icsa"] + icsa_id)
-            g.add((subject_uri, RDF.type, NS_ICSA.ICSA))
             object_uri = URIRef(RESOURCE_BASE["cve"] + cve_id)
             g.add((subject_uri, predicate, object_uri))
             count += 1
@@ -482,7 +472,6 @@ def _link_cve_to_epss(
             cve_id = _sanitize_uri_component(cve_id)
             subject_uri = URIRef(RESOURCE_BASE["cve"] + cve_id)
             object_uri = URIRef(RESOURCE_BASE["epss"] + cve_id)
-            g.add((subject_uri, RDF.type, NS_CVE.CVE))
             g.add((subject_uri, predicate, object_uri))
             count += 1
     return count
@@ -511,7 +500,6 @@ def _link_d3fend_to_attck(g: Graph, subject_files: list[str], predicate: URIRef)
             off_uri = URIRef(
                 RESOURCE_BASE["attck"] + _sanitize_uri_component(off_tech_id)
             )
-            g.add((def_uri, RDF.type, NS_D3FEND.DefensiveTechnique))
             g.add((def_uri, predicate, off_uri))
             count += 1
     except (OSError, ValueError, RuntimeError, KeyError) as e:

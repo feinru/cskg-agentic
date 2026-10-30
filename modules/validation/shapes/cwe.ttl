@@ -1,0 +1,29 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cwe: <http://w3id.org/sepses/vocab/ref/cwe#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CWEShape
+    a sh:NodeShape ;
+    sh:targetClass cwe:CWE ;
+    sh:property [
+        sh:path cwe:id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:pattern "^CWE-\\d+$" ;
+        sh:severity sh:Violation ;
+        sh:message "CWE identifier must match standard MITRE format (CWE-ID)" ;
+    ] ;
+    sh:property [
+        sh:path cwe:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:severity sh:Violation ;
+        sh:message "Official weakness name is mandatory" ;
+    ] ;
+    sh:property [
+        sh:path cwe:description ;
+        sh:datatype xsd:string ;
+        sh:severity sh:Warning ;
+        sh:message "Technical description of the weakness is recommended" ;
+    ] .

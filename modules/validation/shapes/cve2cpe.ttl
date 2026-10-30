@@ -1,0 +1,14 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cve: <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix shape: <http://w3id.org/sepses/shape/> .
+
+shape:CVEhasCPEShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf cve:hasCPE ;
+    sh:property [
+        sh:path cve:hasCPE ;
+        sh:nodeKind sh:IRI ;
+        sh:pattern "^http://w3id\\.org/sepses/resource/cpe/" ;
+        sh:severity sh:Violation ;
+        sh:message "cve:hasCPE target must be a valid SEPSES CPE resource IRI" ;
+    ] .
