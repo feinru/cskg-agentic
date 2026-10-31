@@ -14,6 +14,13 @@ export function normalizeMarkdown(text: string): string {
 
   cleaned = cleaned.replace(/\n {4,}(\*\*|\*|###|- )/g, "\n$1");
 
+  cleaned = cleaned.replace(
+    /\n\s*[*+-]\s+\*\*(CWE(?: Name)?|CAPEC(?: Name)?|ATT&CK(?: Technique)?|Technique|Impact|Weakness|Details|SOC (?:Threat Context|Perspective)|Severity|Base Score|Published)\*\*/gi,
+    "\n    - **$1**"
+  );
+
+  cleaned = cleaned.replace(/(\w+)\s+:\s+:\s*(\w+)/g, "$1::$2");
+
   return cleaned.trim();
 }
 

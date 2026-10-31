@@ -64,13 +64,14 @@
 }
 
 .markdownOutput ul, .markdownOutput ol {
-  padding-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  padding-left: 1.4rem;
+  margin-top: 0.6rem;
+  margin-bottom: 1.25rem;
 }
 
 .markdownOutput li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
 }
 
 .markdownOutput li > :first-child {
@@ -81,9 +82,22 @@
   margin-bottom: 0;
 }
 
-.markdownOutput ul ul, .markdownOutput ol ol, .markdownOutput ul ol, .markdownOutput ol ul {
-  margin-top: 0.5rem;
-  margin-bottom: 0;
+.markdownOutput li > ul,
+.markdownOutput li > ol {
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+  padding-left: 1.25rem;
+  border-left: 2px solid var(--border);
+}
+
+.markdownOutput li > ul > li {
+  margin-bottom: 0.3rem;
+  font-size: 0.95em;
+  color: var(--text-secondary);
+}
+
+.markdownOutput li > ul > li strong {
+  color: var(--text-primary);
 }
 
 .markdownOutput strong {
@@ -91,11 +105,21 @@
   color: #000;
 }
 
-.markdownOutput h1, .markdownOutput h2, .markdownOutput h3, .markdownOutput h4 {
+.markdownOutput h1, .markdownOutput h2 {
   font-family: 'Linux Libertine', Georgia, Times, serif;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   color: #000;
+}
+
+.markdownOutput h3, .markdownOutput h4 {
+  font-family: 'Linux Libertine', Georgia, Times, serif;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: #111;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+  font-weight: 600;
 }
 
 .markdownOutput a {
@@ -121,13 +145,15 @@
 }
 
 .markdownOutput code {
-  font-family: Consolas, "Courier New", monospace;
-  background-color: var(--bg-sidebar);
-  padding: 0.15rem 0.3rem;
-  border-radius: 2px;
-  font-size: 0.9em;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background-color: #f1f3f5;
+  border: 1px solid #e2e5e8;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+  color: #1f2328;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .markdownOutput pre code {
@@ -331,13 +357,15 @@
 }
 
 .inlineCode {
-  font-family: Consolas, 'Courier New', monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   background-color: #f1f3f5;
   border: 1px solid #e2e5e8;
   padding: 0.15rem 0.35rem;
   border-radius: 3px;
   font-size: 0.88em;
   color: #1f2328;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .uriBadge {

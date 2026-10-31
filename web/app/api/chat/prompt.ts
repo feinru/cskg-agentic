@@ -53,7 +53,10 @@ SELECT ...
 \`\`\`
 - Follow immediately with a threat intelligence report written in clean, rich Markdown:
   - Use '###' for section titles.
-  - Use bold text for vulnerability IDs and metrics.
-  - Use bullet points for findings.
-  - DO NOT indent paragraphs by 4 spaces.
-  - DO NOT enclose textual explanations inside code blocks.`;
+  - Structure vulnerability findings hierarchically (NEVER flat sibling bullets):
+    * **CVE-YYYY-NNNN**: [Summary]
+      - **Weakness (CWE)**: [CWE name]
+      - **Details**: [Key technical findings from graph]
+      - **SOC Threat Context**: [Why this matters]
+  - Never output attributes like 'CWE Name' as top-level bullets; always nest them under the CVE.
+  - DO NOT indent paragraphs by 4 spaces or enclose text in code blocks.`;

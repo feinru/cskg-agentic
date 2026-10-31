@@ -5,3 +5,7 @@ __pycache__/
 web/
 .git/
 *.log
+modules/fetcher/cache/
+.cache/
+cache/
+data/
